@@ -1,0 +1,46 @@
+# Vivado build artifacts
+.Xil/
+.ipcache/
+.run/
+_x/
+xsim.dir/
+*.wdb
+*.vcd
+*.saif
+*.log
+*.jou
+*.pb
+*.str
+
+# Vivado project files (generated)
+*.xpr
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+
+# Build outputs
+*.xo
+*.xclbin
+*.link_summary
+*.compile_summary
+host
+packaged_kernel_*/
+tmp_kernel_pack_*/
+user-xo/
+
+# Simulation artifacts
+*.csv
+webtalk/
+.Xil/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Editor
+.vscode/
+*.swp
+*~
