@@ -11,7 +11,8 @@ help::
 	@echo ""
 	@echo "=== Vitis Build ==="
 	@echo "  make all TARGET=<hw_emu/hw> DEVICE=<platform>"
-	@echo "  make run TARGET=<hw_emu/hw> DEVICE=<platform>"
+	@echo "  make run TARGET=<hw_emu/hw> FUNC=<name>  - Run single function (default: sigmoid)"
+	@echo "  make run_all TARGET=<hw_emu/hw>           - Run all 9 functions"
 	@echo ""
 	@echo "=== Clean ==="
 	@echo "  make clean           - Remove build artifacts"
@@ -85,7 +86,7 @@ EXECUTABLE = host
 CLFLAGS += -t $(TARGET) --platform $(DEVICE) --save-temps --kernel_frequency $(FREQ)
 EMCONFIG_DIR = $(XCLBIN)/
 
-.PHONY: all xclbin exe run emconfig check-devices
+.PHONY: all xclbin exe run run_all emconfig check-devices
 
 all: check-devices $(EXECUTABLE) $(XCLBIN)/eda.$(TARGET).xclbin emconfig
 
@@ -113,14 +114,31 @@ emconfig: $(EMCONFIG_DIR)/emconfig.json
 $(EMCONFIG_DIR)/emconfig.json:
 	emconfigutil --platform $(DEVICE) --od $(EMCONFIG_DIR)
 
-# Run
+# Run single function: make run TARGET=hw FUNC=sigmoid
+# Run all functions:    make run_all TARGET=hw
+FUNC ?= sigmoid
+
 run: all
 ifeq ($(TARGET),$(filter $(TARGET),sw_emu hw_emu))
 	cp -rf $(EMCONFIG_DIR)/emconfig.json .
-	XCL_EMULATION_MODE=$(TARGET) ./$(EXECUTABLE) ./eda.xclbin
+	XCL_EMULATION_MODE=$(TARGET) ./$(EXECUTABLE) ./eda.xclbin $(FUNC)
 else
-	./$(EXECUTABLE) ./eda.xclbin
+	./$(EXECUTABLE) ./eda.xclbin $(FUNC)
 endif
+
+run_all: all
+	@for func in sigmoid tanh silu mish gelu hardswish exp reciprocal rsqrt; do \
+		echo "============================================================"; \
+		echo " Testing: $$func"; \
+		echo "============================================================"; \
+		if [ "$(TARGET)" = "sw_emu" ] || [ "$(TARGET)" = "hw_emu" ]; then \
+			cp -rf $(EMCONFIG_DIR)/emconfig.json .; \
+			XCL_EMULATION_MODE=$(TARGET) ./$(EXECUTABLE) ./eda.xclbin $$func; \
+		else \
+			./$(EXECUTABLE) ./eda.xclbin $$func; \
+		fi; \
+		echo ""; \
+	done
 
 # ==============================================================
 # Clean
