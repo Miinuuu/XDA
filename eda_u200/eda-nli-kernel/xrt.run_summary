@@ -7,9 +7,9 @@
     "generation": {
         "this_file": "\/home\/jmw\/ing\/eda_submission\/eda_u200\/eda-nli-kernel\/xrt.run_summary",
         "source": "vp",
-        "PID": "851728",
-        "timestamp": "1774337372879",
-        "target": "TT_HW_EMU",
+        "PID": "10223",
+        "timestamp": "1774441444094",
+        "target": "TT_HW",
         "flags": [
             ""
         ]
