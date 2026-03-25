@@ -7,8 +7,8 @@
     "generation": {
         "this_file": "\/home\/jmw\/ing\/eda_submission\/eda_u200\/eda-nli-kernel\/xrt.run_summary",
         "source": "vp",
-        "PID": "10223",
-        "timestamp": "1774441444094",
+        "PID": "16162",
+        "timestamp": "1774442046762",
         "target": "TT_HW",
         "flags": [
             ""
@@ -18,10 +18,6 @@
         {
             "name": "native_trace.csv",
             "type": "VP_TRACE"
-        },
-        {
-            "name": "summary.csv",
-            "type": "PROFILE_SUMMARY"
         }
     ]
 }
