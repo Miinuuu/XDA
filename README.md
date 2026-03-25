@@ -150,19 +150,31 @@ make cleanall             # Remove everything
 
 The host application (`eda_nli_host.cpp`) runs 207 FP16 test vectors through the kernel and compares output against expected values using ULP (Unit in the Last Place) distance. Pass criterion: all results within 4 ULP.
 
-### Expected Output (hw_emu)
+### Expected Output 
 
-```
-=== EDA-NLI Sigmoid Kernel ===
-Test vectors: 207, padded: 224 (448 bytes)
-...
---- Summary ---
-Test vectors: 207
-Bit-exact matches: 207/207
-Max ULP distance: 0
-*** TEST PASSED (all within 4 ULP) ***
-```
+  ┌────────────┬─────────┬────────┐
+  │  Function  │ Vectors │ Result │
+  ├────────────┼─────────┼────────┤
+  │ sigmoid    │ 211     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ tanh       │ 209     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ silu       │ 211     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ mish       │ 211     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ gelu       │ 210     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ hardswish  │ 210     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ exp        │ 211     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ reciprocal │ 211     │ EXACT  │
+  ├────────────┼─────────┼────────┤
+  │ rsqrt      │ 211     │ EXACT  │
+  └────────────┴─────────┴────────┘
 
+  
 ## Encrypted RTL Notice
 
 The core EDA-NLI engine (`eda_nli_engine_4s.vp`) is provided as an IEEE P1735 encrypted Verilog file during the submission review period. The encrypted source fully supports simulation, synthesis, and bitstream generation in Xilinx Vivado. The complete unencrypted RTL source will be disclosed after the review process is concluded.
