@@ -1,184 +1,90 @@
-# EDA-NLI: Exponent-Direct Addressing with Fused Shift-Add Interpolation
+# EDA-NLI: Exponent-Direct Addressing Nonlinear Interpolation
 
-Hardware implementation of comparator-free nonlinear function approximation for FP16 LLM inference acceleration on Xilinx Alveo U200.
+FP16 비트필드 추출을 이용한 zero-FP-arithmetic 주소 생성 기반 비선형 함수 근사 엔진.
 
-## Repository Structure
-
-```
-eda_u200/eda-nli-kernel/
-├── src/
-│   ├── IP/                            # RTL source
-│   │   ├── eda_nli_engine_4s.vp       # 4-stage EDA-NLI pipeline (IEEE P1735 encrypted)
-│   │   ├── eda_nli_compute.sv         # PISO → NLI engine → SIPO datapath + FSM
-│   │   ├── EDA_NLI_wrapper.sv         # AXI4 master/slave top-level wrapper
-│   │   ├── EDA.v                      # Vitis kernel top
-│   │   ├── EDA_control_s_axi.v        # AXI-Lite control registers
-│   │   ├── EDA_axi_read_master.sv     # AXI4 burst read master (512-bit)
-│   │   ├── EDA_axi_write_master.sv    # AXI4 burst write master (512-bit)
-│   │   ├── EDA_counter.sv             # Transaction counter
-│   │   └── fp_adder.v                 # Parameterized floating-point adder
-│   ├── host/                          # C++ host application
-│   │   ├── eda_nli_host.cpp           # XRT host — LUT config + sigmoid verification
-│   │   └── user-host.cpp              # Host template
-│   ├── testbench/                     # Simulation & verification
-│   │   ├── tb_eda_nli_kernel.sv       # AXI VIP kernel testbench
-│   │   ├── tb_axi_vip_kernel.sv       # AXI protocol compliance test
-│   │   ├── tb_top_simple.sv           # Simplified top-level test
-│   │   ├── tb_reset_verify.sv         # Reset sequence test
-│   │   ├── create_project.tcl         # Vivado project setup
-│   │   ├── create_axi_vip_tb.tcl      # AXI VIP testbench generator
-│   │   └── run_sim.tcl                # Simulation runner (VCD export)
-│   ├── c-model/
-│   │   └── EDA.cpp                    # C reference model
-│   └── xml/
-│       └── user.xml                   # Vitis kernel interface definition
-├── scripts/
-│   ├── package_kernel.tcl             # IP packaging for Vitis
-│   └── gen_xo.tcl                     # XO generation from RTL
-├── config/
-│   ├── sigmoid_config_rom.h           # Config ROM (32 entries, exponent → LUT address)
-│   ├── sigmoid_func_lut.h             # Function LUT (256 entries, FP16)
-│   └── test_vectors.mem               # FP16 test vectors (207 vectors)
-└── Makefile
-```
-
-## Architecture
-
-### EDA-NLI Engine (`eda_nli_engine_4s.vp`)
-
-4-stage pipelined FP16 nonlinear function approximation unit. The core engine RTL is provided as an IEEE P1735 encrypted file. Simulation, synthesis, and bitstream generation are all permitted.
-
-| Stage | Operation |
-|-------|-----------|
-| 1 | Bit extraction + Config ROM lookup → LUT address + interpolation fraction |
-| 2 | Dual LUT read + FP16 subtract (diff = y₁ − y₀) |
-| 3 | FMA Part A — integer multiply + extend + align + add/sub |
-| 4 | FMA Part B — LZC + normalize + round + output MUX |
-
-### System Data Flow
+## Directory Structure
 
 ```
-DDR ──→ AXI4 Read Master ──→ 512-bit ──→ PISO (32×FP16)
-                                              │
-                                     EDA-NLI Engine (×32)
-                                              │
-                              SIPO (32×FP16) ──→ 512-bit ──→ AXI4 Write Master ──→ DDR
+├── sw/                          # Python software
+│   ├── nli_eda.py               # EDA-NLI core (optimize, evaluate)
+│   ├── nli_eda_engine.py        # EDA engine implementation
+│   ├── nli_engine.py            # baseline NLI engine
+│   ├── nli_dp.py                # DP-based cutpoint optimization
+│   ├── ablation_sweep.py        # ablation study
+│   ├── nli_table1_eval.py       # Table 1 reproduction
+│   └── run_all_experiments.py   # 전체 실험 실행
+│
+└── hw/                          # Hardware RTL
+    ├── nli/                     # NLI engine RTL + testbench
+    │   ├── nli_engine.v
+    │   ├── gen_nli_mem.py       # .mem 파일 생성
+    │   ├── tb_nli_engine.sv
+    │   └── Makefile
+    ├── fpu/                     # FP adder IP
+    └── eda_u200/                # Xilinx U200 Vitis kernel
+        └── eda-nli-kernel/
+            ├── src/IP/          # kernel RTL (encrypted .vp)
+            ├── src/host/        # host application (C++)
+            ├── src/c-model/     # C reference model
+            ├── config/          # LUT config & test vectors
+            └── Makefile
 ```
 
-- **Data width**: 512-bit AXI4, processing 32 FP16 elements per beat
-- **Clock**: 150 MHz kernel frequency
-- **Pipeline latency**: 4 cycles per element
-- **Configuration**: 32-entry Config ROM + 256-entry Function LUT, loadable at runtime via AXI-Lite
+## How to Run
 
-### AXI-Lite Register Map (`EDA_control_s_axi`)
-
-| Offset | Register | Description |
-|--------|----------|-------------|
-| 0x00 | Control | ap_start / ap_done / ap_idle / ap_ready |
-| 0x10 | User Status | user_start / user_done / user_idle / user_ready |
-| 0x14 | scalar00 | Transfer size in bytes (default: 16384) |
-| 0x1C–0x20 | A[63:0] | DDR read source address |
-| 0x28–0x2C | B[63:0] | DDR write destination address |
-| 0x40 | cfg_ctrl | cfg_sel[0] (0=Config ROM, 1=Func LUT), cfg_addr[9:1] |
-| 0x44 | cfg_wdata | LUT write data (FP16) |
-
-### Kernel Interface (Vitis)
-
-| Port | Direction | Width | Function |
-|------|-----------|-------|----------|
-| s_axi_control | Slave | 32-bit | AXI-Lite control/config registers |
-| m00_axi | Master | 512-bit | DDR burst read |
-| m01_axi | Master | 512-bit | DDR burst write |
-
-## Requirements
-
-| Tool | Version |
-|------|---------|
-| Xilinx Vivado | 2024.1 |
-| Xilinx Vitis | 2024.1 |
-| XRT (Xilinx Runtime) | 2.16+ |
-| Platform | xilinx_u200_gen3x16_xdma_2_202110_1 |
-| Hardware | Xilinx Alveo U200 (for on-board execution) |
-
-## Build & Run
-
-All commands are executed from `eda_u200/eda-nli-kernel/`.
+### SW: Python 실험
 
 ```bash
-cd eda_u200/eda-nli-kernel
+cd sw
+
+# 전체 실험 (Table 1~5 재현)
+python3 run_all_experiments.py
+
+# 개별 실행
+python3 nli_eda.py           # EDA-NLI 단독
+python3 ablation_sweep.py    # ablation study
+python3 nli_table1_eval.py   # Table 1
 ```
 
-### Vivado Simulation (AXI VIP testbench)
+Requirements: Python 3, PyTorch, NumPy
+
+### HW: RTL 시뮬레이션 (Icarus Verilog)
 
 ```bash
-make create_proj          # Create Vivado project + generate AXI VIP IPs
-make sim                  # Run simulation (exports VCD waveform)
-make sim_all              # Create project + simulate in one step
+cd hw/nli
+
+# .mem 생성 + 시뮬레이션 (기본: silu)
+make all
+
+# 함수 지정
+make all FUNC=gelu
+
+# 파형 확인
+make wave
 ```
 
-### Hardware Emulation (hw_emu)
+Requirements: Icarus Verilog (`iverilog`), Python 3, GTKWave (파형 확인 시)
+
+### HW: Vitis U200 커널
 
 ```bash
-make all TARGET=hw_emu    # Build: host + XO + XCLBIN + emconfig
-make run TARGET=hw_emu    # Build + run emulation (207 test vectors)
+cd hw/eda_u200/eda-nli-kernel
+
+# --- HW Emulation ---
+make all TARGET=hw_emu
+make run TARGET=hw_emu FUNC=sigmoid       # 단일 함수
+make run_all TARGET=hw_emu                # 전체 9개 함수
+
+# --- HW (실제 FPGA 빌드 & 실행) ---
+make all TARGET=hw
+make run TARGET=hw FUNC=sigmoid
+make run_all TARGET=hw
 ```
 
-### Hardware Build (hw)
+지원 함수: `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `exp`, `reciprocal`, `rsqrt`
 
-```bash
-make all TARGET=hw        # Build for Alveo U200
-make run TARGET=hw        # Run on FPGA hardware
-```
+Requirements: Vitis 2021.1+, Xilinx U200 platform (`xilinx_u200_gen3x16_xdma_2_202110_1`)
 
-### Individual Build Steps
+## Note
 
-```bash
-make exe                  # Compile host application only
-make xclbin TARGET=hw_emu # Build XCLBIN only
-make emconfig             # Generate emulation config
-```
-
-### Clean
-
-```bash
-make clean                # Remove build artifacts (host, xclbin, xo)
-make clean_proj           # Remove Vivado simulation project
-make cleanall             # Remove everything
-```
-
-## Verification
-
-The host application (`eda_nli_host.cpp`) runs 207 FP16 test vectors through the kernel and compares output against expected values using ULP (Unit in the Last Place) distance. Pass criterion: all results within 4 ULP.
-
-### Expected Output 
-
-  ┌────────────┬─────────┬────────┐
-  │  Function  │ Vectors │ Result │
-  ├────────────┼─────────┼────────┤
-  │ sigmoid    │ 211     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ tanh       │ 209     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ silu       │ 211     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ mish       │ 211     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ gelu       │ 210     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ hardswish  │ 210     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ exp        │ 211     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ reciprocal │ 211     │ EXACT  │
-  ├────────────┼─────────┼────────┤
-  │ rsqrt      │ 211     │ EXACT  │
-  └────────────┴─────────┴────────┘
-
-  
-## Encrypted RTL Notice
-
-The core EDA-NLI engine (`eda_nli_engine_4s.vp`) is provided as an IEEE P1735 encrypted Verilog file during the submission review period. The encrypted source fully supports simulation, synthesis, and bitstream generation in Xilinx Vivado. The complete unencrypted RTL source will be disclosed after the review process is concluded.
-
-## License
-
-This code is provided for academic review purposes only.
+EDA 핵심 RTL(`eda_nli_engine_4s.vp`)은 현재 암호화된 형태로 제공됩니다. 시뮬레이션, 합성, 비트스트림 생성은 정상적으로 가능합니다. 논문 게재 확정 후 암호화되지 않은 소스 코드를 공개할 예정입니다.
