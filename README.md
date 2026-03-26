@@ -2,6 +2,8 @@
 
 A nonlinear function approximation engine based on zero-FP-arithmetic address generation using FP16 bit-field extraction.
 
+Supported functions: `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `exp`, `reciprocal`, `rsqrt`
+
 ## Directory Structure
 
 ```
@@ -27,14 +29,26 @@ A nonlinear function approximation engine based on zero-FP-arithmetic address ge
         └── eda-nli-kernel/
             ├── src/IP/          # Kernel RTL (encrypted .vp)
             ├── src/host/        # Host application (C++)
+            ├── src/nli_engine/  # Standalone engine RTL + testbench
             ├── src/c-model/     # C reference model
             ├── config/          # LUT config & test vectors (.mem)
             └── Makefile
 ```
 
-## How to Run
+## Requirements
 
-### SW: Python Experiments
+- **SW**: Python 3, PyTorch, NumPy
+- **NLI RTL Simulation**: Icarus Verilog (`iverilog`), GTKWave (optional)
+- **EDA RTL Simulation**: Vivado (xvlog/xelab/xsim)
+- **FPGA Build & Run**: Vitis 2021.1+, Xilinx U200 platform (`xilinx_u200_gen3x16_xdma_2_202110_1`)
+
+## Workflow
+
+The overall flow follows three stages: **optimize** (sw) → **generate .mem** (gen) → **simulate or run on FPGA** (hw).
+
+### Step 1: SW — Run Optimization & Experiments
+
+The `sw/` scripts find optimal LUT configurations for each nonlinear function. This step is independent of hardware.
 
 ```bash
 cd sw
@@ -42,32 +56,62 @@ cd sw
 # Run all experiments (reproduce Tables 1–5)
 python3 run_all_experiments.py
 
-# Run individually
-python3 nli_eda.py           # EDA-NLI standalone
+# Or run individually
+python3 nli_eda.py           # EDA-NLI optimization + evaluation
 python3 ablation_sweep.py    # Ablation study
-python3 nli_table1_eval.py   # Table 1
+python3 nli_table1_eval.py   # Table 1 reproduction
 ```
 
-Requirements: Python 3, PyTorch, NumPy
+### Step 2: Generate .mem Files
 
-### HW: RTL Simulation (Icarus Verilog)
+The `gen/` scripts read optimization results from `sw/` and produce `.mem` files (config ROM, function LUT, test vectors) that hardware consumes.
+
+#### For NLI Engine (baseline)
+
+```bash
+# Generates: point_reg.mem, mul_reg.mem, lut_reg.mem, test_vectors.mem
+python3 gen/gen_nli_mem.py silu hw/nli/
+```
+
+#### For EDA Engine (4-stage FMA)
+
+```bash
+# Single function — generates: config_rom.mem, func_lut.mem, test_vectors_4s.mem
+python3 gen/gen_eda_mem_fma.py --func silu --output-dir hw/eda_u200/eda-nli-kernel/src/nli_engine/
+
+# All 9 functions — exhaustive FP16 test vectors into config/<func>/
+cd gen
+python3 gen_exhaustive_mem.py
+```
+
+### Step 3a: RTL Simulation — NLI Engine (Icarus Verilog)
+
+Simulates the baseline NLI engine. Makefile handles mem generation + simulation automatically.
 
 ```bash
 cd hw/nli
 
-# Generate .mem files + run simulation (default: silu)
-make all
-
-# Specify function
-make all FUNC=gelu
-
-# View waveform
-make wave
+make all              # Generate .mem + simulate (default: silu)
+make all FUNC=gelu    # Specify function
+make wave             # View waveform (GTKWave)
 ```
 
-Requirements: Icarus Verilog (`iverilog`), Python 3, GTKWave (for waveform viewing)
+### Step 3b: RTL Simulation — EDA Engine (Vivado xsim)
 
-### HW: Vitis U200 Kernel
+Simulates the 4-stage FMA EDA engine with Xilinx simulator.
+
+```bash
+cd hw/eda_u200/eda-nli-kernel/src/nli_engine
+
+make all              # Generate .mem + simulate (default: silu)
+make all FUNC=gelu    # Specify function
+make sim-all          # Test all 9 functions
+make sim-exhaustive   # Exhaustive FP16 verification (all 9 functions)
+```
+
+### Step 3c: FPGA — Vitis U200 Kernel Build & Run
+
+Builds the kernel xclbin and runs on FPGA (or HW emulation). The host application loads `config/<func>/*.mem` files at runtime via AXI-Lite.
 
 ```bash
 cd hw/eda_u200/eda-nli-kernel
@@ -77,15 +121,26 @@ make all TARGET=hw_emu
 make run TARGET=hw_emu FUNC=sigmoid       # Single function
 make run_all TARGET=hw_emu                # All 9 functions
 
-# --- HW (actual FPGA build & run) ---
+# --- HW (actual FPGA) ---
 make all TARGET=hw
 make run TARGET=hw FUNC=sigmoid
 make run_all TARGET=hw
 ```
 
-Supported functions: `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `exp`, `reciprocal`, `rsqrt`
+## Pipeline Summary
 
-Requirements: Vitis 2021.1+, Xilinx U200 platform (`xilinx_u200_gen3x16_xdma_2_202110_1`)
+```
+sw/nli_eda.py          gen/gen_eda_mem_fma.py       hw/eda_u200/.../src/nli_engine/
+(optimize LUT)  ──→   (produce .mem files)   ──→   (RTL simulation, xsim)
+                            │
+                            │  gen/gen_exhaustive_mem.py
+                            ▼
+                       hw/eda_u200/.../config/<func>/*.mem
+                            │
+                            ▼
+                       hw/eda_u200/.../Makefile
+                       (Vitis build → xclbin → FPGA run)
+```
 
 ## Note
 
