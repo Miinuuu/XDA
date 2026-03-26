@@ -7,6 +7,7 @@ Supported functions: `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `ex
 ## Directory Structure
 
 ```
+├── run_pipeline.sh              # Full pipeline automation script
 ├── sw/                          # Python software
 │   ├── nli_eda.py               # EDA-NLI core (optimize, evaluate)
 │   ├── nli_eda_engine.py        # EDA engine implementation
@@ -42,7 +43,26 @@ Supported functions: `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `ex
 - **EDA RTL Simulation**: Vivado (xvlog/xelab/xsim)
 - **FPGA Build & Run**: Vitis 2021.1+, Xilinx U200 platform (`xilinx_u200_gen3x16_xdma_2_202110_1`)
 
-## Workflow
+## Quick Start
+
+`run_pipeline.sh` automates the full pipeline from SW optimization to FPGA execution.
+
+```bash
+# Full pipeline (SW → generate .mem → RTL sim → Vitis build → FPGA run)
+./run_pipeline.sh                          # default: hw_emu, all 9 functions
+./run_pipeline.sh --target hw              # real FPGA
+./run_pipeline.sh --func sigmoid           # single function only
+./run_pipeline.sh --skip-sw                # skip SW experiments
+
+# Run individual steps
+./run_pipeline.sh --step sw                # SW experiments only
+./run_pipeline.sh --step gen               # generate .mem only
+./run_pipeline.sh --step sim               # .mem generation + RTL simulation
+./run_pipeline.sh --step build             # .mem generation + Vitis build
+./run_pipeline.sh --step run               # FPGA run only (build must exist)
+```
+
+## Workflow Details
 
 The overall flow follows three stages: **optimize** (sw) → **generate .mem** (gen) → **simulate or run on FPGA** (hw).
 
