@@ -12,7 +12,7 @@ all: gen sim
 
 gen:
 	@echo "=== Generating EDA-NLI FMA .mem files for $(FUNC) ==="
-	python3 $(GEN_DIR)/gen_eda_mem_7s.py --func $(FUNC) --output-dir $(CURDIR)
+	python3 $(GEN_DIR)/gen_eda_mem_fma.py --func $(FUNC) --output-dir $(CURDIR)
 
 sim: gen
 	@echo "=== Compiling 4-stage FMA ==="
@@ -29,7 +29,7 @@ sim-all:
 	for func in $(ALL_FUNCS); do \
 		echo ""; \
 		echo "========== Testing: $$func =========="; \
-		python3 $(GEN_DIR)/gen_eda_mem_7s.py --func $$func --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error"; \
+		python3 $(GEN_DIR)/gen_eda_mem_fma.py --func $$func --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error"; \
 		result=$$(xsim $(SIM_4S) -runall 2>&1); \
 		echo "$$result" | grep -E "Results|Total|Max ULP|PASSED|FAILED"; \
 		if echo "$$result" | grep -q "ALL TESTS PASSED"; then \
@@ -49,7 +49,7 @@ sim-exhaustive:
 	for func in $(ALL_FUNCS); do \
 		echo ""; \
 		echo "========== Exhaustive: $$func =========="; \
-		python3 $(GEN_DIR)/gen_eda_mem_7s.py --func $$func --exhaustive --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error|Exhaustive"; \
+		python3 $(GEN_DIR)/gen_eda_mem_fma.py --func $$func --exhaustive --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error|Exhaustive"; \
 		result=$$(xsim $(SIM_4S) -runall 2>&1); \
 		echo "$$result" | grep -E "Results|Total|Max ULP|PASSED|FAILED"; \
 		nvec=$$(echo "$$result" | grep -oP 'Total: \K[0-9]+'); \
