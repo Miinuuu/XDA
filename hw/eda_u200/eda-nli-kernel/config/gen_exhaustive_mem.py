@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Generate exhaustive .mem + .h files for FPGA on-board verification.
+"""Generate exhaustive .mem files for FPGA on-board verification.
 
 For each of 9 functions:
-  <func>/config_rom.mem, func_lut.mem, test_vectors.mem  (for RTL sim)
-  <func>_config_rom.h, <func>_func_lut.h                 (for host C++)
+  <func>/config_rom.mem, func_lut.mem, test_vectors.mem
 
 test_vectors.mem uses the FULL FP16 grid (31K-51K vectors per function)
 with HW-accurate expected values from bit-exact EDA pipeline simulation.
@@ -73,62 +72,14 @@ def generate_exhaustive(func_name, output_dir):
     print(f"  test_vectors.mem : {count} exhaustive vectors (was ~210)")
 
 
-def generate_h_files(func_name, config_dir):
-    """Generate C header files from .mem files."""
-    upper = func_name.upper()
-
-    # config_rom.h
-    entries = []
-    with open(os.path.join(config_dir, func_name, 'config_rom.mem')) as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('//'):
-                continue
-            entries.append(int(line.split()[0], 16))
-
-    with open(os.path.join(config_dir, f'{func_name}_config_rom.h'), 'w') as f:
-        f.write(f"#ifndef {upper}_CONFIG_ROM_H\n#define {upper}_CONFIG_ROM_H\n")
-        f.write("#include <cstdint>\n\n")
-        f.write(f"static const uint16_t {func_name}_config_rom[] = {{\n")
-        for e in entries:
-            f.write(f"    0x{e:04X},\n")
-        f.write(f"}};\n")
-        f.write(f"static const int {upper}_CONFIG_ROM_SIZE = "
-                f"sizeof({func_name}_config_rom)/sizeof({func_name}_config_rom[0]);\n")
-        f.write(f"#endif\n")
-
-    # func_lut.h
-    entries = []
-    with open(os.path.join(config_dir, func_name, 'func_lut.mem')) as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('//'):
-                continue
-            entries.append(int(line.split()[0], 16))
-
-    with open(os.path.join(config_dir, f'{func_name}_func_lut.h'), 'w') as f:
-        f.write(f"#ifndef {upper}_FUNC_LUT_H\n#define {upper}_FUNC_LUT_H\n")
-        f.write("#include <cstdint>\n\n")
-        f.write(f"static const uint16_t {func_name}_func_lut[] = {{\n")
-        for e in entries:
-            f.write(f"    0x{e:04X},\n")
-        f.write(f"}};\n")
-        f.write(f"static const int {upper}_FUNC_LUT_SIZE = "
-                f"sizeof({func_name}_func_lut)/sizeof({func_name}_func_lut[0]);\n")
-        f.write(f"#endif\n")
-
-    print(f"  {func_name}_config_rom.h, {func_name}_func_lut.h updated")
-
-
 if __name__ == '__main__':
     script_dir = os.path.dirname(os.path.abspath(__file__))
     funcs = ['silu', 'exp', 'rsqrt', 'gelu', 'sigmoid', 'tanh',
              'reciprocal', 'hardswish', 'mish']
 
-    print("=== Generating exhaustive .mem + .h files ===")
+    print("=== Generating exhaustive .mem files ===")
     for fn in funcs:
         out = os.path.join(script_dir, fn)
         generate_exhaustive(fn, out)
-        generate_h_files(fn, script_dir)
 
     print(f"\nDone. Files in {script_dir}/<func>/")
