@@ -256,9 +256,6 @@ static const uint16_t rsqrt_func_lut[] = {
     0x1C9F,
     0x1C47,
     0x1C00,
-    0x1C00,
-    0x1C00,
-    0x1C00,
 };
 static const int RSQRT_FUNC_LUT_SIZE = sizeof(rsqrt_func_lut)/sizeof(rsqrt_func_lut[0]);
 #endif

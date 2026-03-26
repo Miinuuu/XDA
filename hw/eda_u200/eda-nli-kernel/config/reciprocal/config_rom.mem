@@ -1,65 +1,65 @@
-// config_rom for reciprocal (4s FMA engine)
-1800
-0610
-0618
-0620
-0628
-0630
-0638
-0640
-0648
-0650
-0658
-0660
-0668
-0670
-0678
-0680
-0688
-0690
-0698
-06A0
-06A8
-06B0
-06B8
-06C0
-06C8
-06D0
-06D8
-06E0
-06E8
-06F0
-14F8
-10FC
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
+// config_rom for reciprocal
+1800  // [ 0] s=0 e= 0 k=4 base=0 CLAMP(edge)
+0610  // [ 1] s=0 e= 1 k=3 base=16
+0618  // [ 2] s=0 e= 2 k=3 base=24
+0620  // [ 3] s=0 e= 3 k=3 base=32
+0628  // [ 4] s=0 e= 4 k=3 base=40
+0630  // [ 5] s=0 e= 5 k=3 base=48
+0638  // [ 6] s=0 e= 6 k=3 base=56
+0640  // [ 7] s=0 e= 7 k=3 base=64
+0648  // [ 8] s=0 e= 8 k=3 base=72
+0650  // [ 9] s=0 e= 9 k=3 base=80
+0658  // [10] s=0 e=10 k=3 base=88
+0660  // [11] s=0 e=11 k=3 base=96
+0668  // [12] s=0 e=12 k=3 base=104
+0670  // [13] s=0 e=13 k=3 base=112
+0678  // [14] s=0 e=14 k=3 base=120
+0680  // [15] s=0 e=15 k=3 base=128
+0688  // [16] s=0 e=16 k=3 base=136
+0690  // [17] s=0 e=17 k=3 base=144
+0698  // [18] s=0 e=18 k=3 base=152
+06A0  // [19] s=0 e=19 k=3 base=160
+06A8  // [20] s=0 e=20 k=3 base=168
+06B0  // [21] s=0 e=21 k=3 base=176
+06B8  // [22] s=0 e=22 k=3 base=184
+06C0  // [23] s=0 e=23 k=3 base=192
+06C8  // [24] s=0 e=24 k=3 base=200
+06D0  // [25] s=0 e=25 k=3 base=208
+06D8  // [26] s=0 e=26 k=3 base=216
+06E0  // [27] s=0 e=27 k=3 base=224
+06E8  // [28] s=0 e=28 k=3 base=232
+06F0  // [29] s=0 e=29 k=3 base=240
+14F8  // [30] s=0 e=30 k=2 base=248 CLAMP(edge)
+10FC  // [31] s=0 e=31 CLAMP(domain)
+1000  // [32] s=1 e= 0 CLAMP(domain)
+1000  // [33] s=1 e= 1 CLAMP(domain)
+1000  // [34] s=1 e= 2 CLAMP(domain)
+1000  // [35] s=1 e= 3 CLAMP(domain)
+1000  // [36] s=1 e= 4 CLAMP(domain)
+1000  // [37] s=1 e= 5 CLAMP(domain)
+1000  // [38] s=1 e= 6 CLAMP(domain)
+1000  // [39] s=1 e= 7 CLAMP(domain)
+1000  // [40] s=1 e= 8 CLAMP(domain)
+1000  // [41] s=1 e= 9 CLAMP(domain)
+1000  // [42] s=1 e=10 CLAMP(domain)
+1000  // [43] s=1 e=11 CLAMP(domain)
+1000  // [44] s=1 e=12 CLAMP(domain)
+1000  // [45] s=1 e=13 CLAMP(domain)
+1000  // [46] s=1 e=14 CLAMP(domain)
+1000  // [47] s=1 e=15 CLAMP(domain)
+1000  // [48] s=1 e=16 CLAMP(domain)
+1000  // [49] s=1 e=17 CLAMP(domain)
+1000  // [50] s=1 e=18 CLAMP(domain)
+1000  // [51] s=1 e=19 CLAMP(domain)
+1000  // [52] s=1 e=20 CLAMP(domain)
+1000  // [53] s=1 e=21 CLAMP(domain)
+1000  // [54] s=1 e=22 CLAMP(domain)
+1000  // [55] s=1 e=23 CLAMP(domain)
+1000  // [56] s=1 e=24 CLAMP(domain)
+1000  // [57] s=1 e=25 CLAMP(domain)
+1000  // [58] s=1 e=26 CLAMP(domain)
+1000  // [59] s=1 e=27 CLAMP(domain)
+1000  // [60] s=1 e=28 CLAMP(domain)
+1000  // [61] s=1 e=29 CLAMP(domain)
+1000  // [62] s=1 e=30 CLAMP(domain)
+1000  // [63] s=1 e=31 CLAMP(domain)

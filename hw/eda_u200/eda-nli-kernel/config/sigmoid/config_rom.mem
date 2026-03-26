@@ -1,65 +1,65 @@
-// config_rom for sigmoid (4s FMA engine)
-00B1
-00B2
-00B3
-00B4
-00B5
-00B6
-00B7
-00B8
-00B9
-00BA
-00BB
-00BC
-02BD
-04BF
-06C3
-08CB
-08DB
-08EB
-04FB
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-10FF
-00AF
-00AE
-00AD
-00AC
-00AB
-00AA
-00A9
-00A8
-00A7
-00A6
-00A5
-00A4
-04A0
-0698
-0888
-0A68
-0A48
-0A28
-0A08
-0600
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
-1000
+// config_rom for sigmoid
+00B1  // [ 0] s=0 e= 0 k=0 base=177
+00B2  // [ 1] s=0 e= 1 k=0 base=178
+00B3  // [ 2] s=0 e= 2 k=0 base=179
+00B4  // [ 3] s=0 e= 3 k=0 base=180
+00B5  // [ 4] s=0 e= 4 k=0 base=181
+00B6  // [ 5] s=0 e= 5 k=0 base=182
+00B7  // [ 6] s=0 e= 6 k=0 base=183
+00B8  // [ 7] s=0 e= 7 k=0 base=184
+00B9  // [ 8] s=0 e= 8 k=0 base=185
+00BA  // [ 9] s=0 e= 9 k=0 base=186
+00BB  // [10] s=0 e=10 k=0 base=187
+00BC  // [11] s=0 e=11 k=0 base=188
+02BD  // [12] s=0 e=12 k=1 base=189
+04BF  // [13] s=0 e=13 k=2 base=191
+06C3  // [14] s=0 e=14 k=3 base=195
+08CB  // [15] s=0 e=15 k=4 base=203
+08DB  // [16] s=0 e=16 k=4 base=219
+08EB  // [17] s=0 e=17 k=4 base=235
+04FB  // [18] s=0 e=18 k=2 base=251
+10FF  // [19] s=0 e=19 CLAMP(domain)
+10FF  // [20] s=0 e=20 CLAMP(domain)
+10FF  // [21] s=0 e=21 CLAMP(domain)
+10FF  // [22] s=0 e=22 CLAMP(domain)
+10FF  // [23] s=0 e=23 CLAMP(domain)
+10FF  // [24] s=0 e=24 CLAMP(domain)
+10FF  // [25] s=0 e=25 CLAMP(domain)
+10FF  // [26] s=0 e=26 CLAMP(domain)
+10FF  // [27] s=0 e=27 CLAMP(domain)
+10FF  // [28] s=0 e=28 CLAMP(domain)
+10FF  // [29] s=0 e=29 CLAMP(domain)
+10FF  // [30] s=0 e=30 CLAMP(domain)
+10FF  // [31] s=0 e=31 CLAMP(domain)
+00AF  // [32] s=1 e= 0 k=0 base=175
+00AE  // [33] s=1 e= 1 k=0 base=174
+00AD  // [34] s=1 e= 2 k=0 base=173
+00AC  // [35] s=1 e= 3 k=0 base=172
+00AB  // [36] s=1 e= 4 k=0 base=171
+00AA  // [37] s=1 e= 5 k=0 base=170
+00A9  // [38] s=1 e= 6 k=0 base=169
+00A8  // [39] s=1 e= 7 k=0 base=168
+00A7  // [40] s=1 e= 8 k=0 base=167
+00A6  // [41] s=1 e= 9 k=0 base=166
+00A5  // [42] s=1 e=10 k=0 base=165
+00A4  // [43] s=1 e=11 k=0 base=164
+04A0  // [44] s=1 e=12 k=2 base=160
+0698  // [45] s=1 e=13 k=3 base=152
+0888  // [46] s=1 e=14 k=4 base=136
+0A68  // [47] s=1 e=15 k=5 base=104
+0A48  // [48] s=1 e=16 k=5 base=72
+0A28  // [49] s=1 e=17 k=5 base=40
+0A08  // [50] s=1 e=18 k=5 base=8
+0600  // [51] s=1 e=19 k=3 base=0
+1000  // [52] s=1 e=20 CLAMP(domain)
+1000  // [53] s=1 e=21 CLAMP(domain)
+1000  // [54] s=1 e=22 CLAMP(domain)
+1000  // [55] s=1 e=23 CLAMP(domain)
+1000  // [56] s=1 e=24 CLAMP(domain)
+1000  // [57] s=1 e=25 CLAMP(domain)
+1000  // [58] s=1 e=26 CLAMP(domain)
+1000  // [59] s=1 e=27 CLAMP(domain)
+1000  // [60] s=1 e=28 CLAMP(domain)
+1000  // [61] s=1 e=29 CLAMP(domain)
+1000  // [62] s=1 e=30 CLAMP(domain)
+1000  // [63] s=1 e=31 CLAMP(domain)
