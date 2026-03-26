@@ -256,9 +256,6 @@ static const uint16_t reciprocal_func_lut[] = {
     0x0155,
     0x0125,
     0x0100,
-    0x0100,
-    0x0100,
-    0x0100,
 };
 static const int RECIPROCAL_FUNC_LUT_SIZE = sizeof(reciprocal_func_lut)/sizeof(reciprocal_func_lut[0]);
 #endif
