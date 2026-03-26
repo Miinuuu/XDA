@@ -29,11 +29,15 @@ host
 packaged_kernel_*/
 tmp_kernel_pack_*/
 user-xo/
+user-xclbin/
+xrt.run_summary
+*.backup.jou
 
 # Simulation artifacts
 *.csv
 webtalk/
 .Xil/
+*.wdb
 
 # Python
 __pycache__/
@@ -45,4 +49,5 @@ __pycache__/
 *.swp
 *~
 
-ing/eda_submission/sw
+# IDE / tool settings
+.claude/
