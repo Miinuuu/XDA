@@ -2,6 +2,9 @@
 # ==============================================================
 # EDA-NLI Full Pipeline: optimize → generate .mem → HW run
 #
+# Activate your Python environment before running:
+#   conda activate v && ./run_pipeline.sh
+#
 # Usage:
 #   ./run_pipeline.sh                     # All steps, hw_emu
 #   ./run_pipeline.sh --target hw         # All steps, real FPGA

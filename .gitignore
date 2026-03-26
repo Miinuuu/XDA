@@ -49,5 +49,11 @@ __pycache__/
 *.swp
 *~
 
+# Generated results
+sw/nli_results/
+
+# Simulation-generated .mem (in nli_engine working dir)
+hw/eda_u200/eda-nli-kernel/src/nli_engine/*.mem
+
 # IDE / tool settings
 .claude/
