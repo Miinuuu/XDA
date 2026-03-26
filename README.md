@@ -17,7 +17,7 @@ A nonlinear function approximation engine based on zero-FP-arithmetic address ge
 ├── gen/                         # Memory file generators
 │   ├── gen_nli_mem.py           # NLI engine .mem generation
 │   ├── gen_eda_mem.py           # EDA engine .mem generation
-│   ├── gen_eda_mem_7s.py        # EDA 4-stage FMA .mem generation
+│   ├── gen_eda_mem_fma.py       # EDA 4-stage FMA .mem generation
 │   └── gen_exhaustive_mem.py    # Exhaustive test vector generation
 │
 └── hw/                          # Hardware RTL

@@ -19,7 +19,7 @@ import torch
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
 from gen_eda_mem import (generate_mem_files as _gen_mem_base,
                          fp32_to_fp16_hex, fp32_to_fp16_bits)
-from gen_eda_mem_7s import hw_eda_forward_fma as hw_eda_forward_scalar
+from gen_eda_mem_fma import hw_eda_forward_fma as hw_eda_forward_scalar
 from nli_eda import optimize_eda
 from nli_dp import get_function, get_domain, generate_fp16_grid
 
