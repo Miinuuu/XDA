@@ -127,7 +127,8 @@ else
 endif
 
 run_all: all
-	@for func in sigmoid tanh silu mish gelu hardswish exp reciprocal rsqrt; do \
+	@passed=0; failed=0; fail_list=""; \
+	for func in sigmoid tanh silu mish gelu hardswish exp reciprocal rsqrt; do \
 		echo "============================================================"; \
 		echo " Testing: $$func"; \
 		echo "============================================================"; \
@@ -137,8 +138,15 @@ run_all: all
 		else \
 			./$(EXECUTABLE) ./eda.xclbin $$func; \
 		fi; \
+		if [ $$? -eq 0 ]; then passed=$$((passed + 1)); \
+		else failed=$$((failed + 1)); fail_list="$$fail_list $$func"; fi; \
 		echo ""; \
-	done
+	done; \
+	echo "============================================================"; \
+	echo " FINAL: $$passed/9 PASSED, $$failed FAILED"; \
+	if [ -n "$$fail_list" ]; then echo " Failed:$$fail_list"; fi; \
+	echo "============================================================"; \
+	[ $$failed -eq 0 ]
 
 # ==============================================================
 # Clean
