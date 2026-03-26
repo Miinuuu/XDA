@@ -14,19 +14,21 @@ A nonlinear function approximation engine based on zero-FP-arithmetic address ge
 │   ├── nli_table1_eval.py       # Table 1 reproduction
 │   └── run_all_experiments.py   # Run all experiments
 │
+├── gen/                         # Memory file generators
+│   ├── gen_nli_mem.py           # NLI engine .mem generation
+│   ├── gen_eda_mem.py           # EDA engine .mem generation
+│   ├── gen_eda_mem_7s.py        # EDA 4-stage FMA .mem generation
+│   └── gen_exhaustive_mem.py    # Exhaustive test vector generation
+│
 └── hw/                          # Hardware RTL
     ├── nli/                     # NLI engine RTL + testbench
-    │   ├── nli_engine.v
-    │   ├── gen_nli_mem.py       # .mem file generation
-    │   ├── tb_nli_engine.sv
-    │   └── Makefile
     ├── fpu/                     # FP adder IP
     └── eda_u200/                # Xilinx U200 Vitis kernel
         └── eda-nli-kernel/
             ├── src/IP/          # Kernel RTL (encrypted .vp)
             ├── src/host/        # Host application (C++)
             ├── src/c-model/     # C reference model
-            ├── config/          # LUT config & test vectors
+            ├── config/          # LUT config & test vectors (.mem)
             └── Makefile
 ```
 

@@ -12,7 +12,7 @@ Produces hex-encoded FP16 values for:
 import sys, os, struct
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
 from nli_engine import build_lut_from_paper, nli_forward
 from nli_dp import PAPER_CUTPOINTS, get_function, get_domain
 import torch

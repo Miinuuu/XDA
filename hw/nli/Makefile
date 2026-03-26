@@ -21,7 +21,7 @@ all: gen sim
 # Generate .mem files from Python
 gen:
 	@echo "=== Generating .mem files for $(FUNC) ==="
-	python3 gen_nli_mem.py $(FUNC) .
+	python3 ../../gen/gen_nli_mem.py $(FUNC) .
 
 # Compile and run simulation
 sim: gen

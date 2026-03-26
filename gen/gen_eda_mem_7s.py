@@ -10,6 +10,7 @@ import sys, os
 import numpy as np
 import torch
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
 from nli_eda import optimize_eda, get_function, get_domain
 
 # Import shared utilities from the original gen_eda_mem
