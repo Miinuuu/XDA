@@ -8,14 +8,15 @@ test_vectors.mem uses the FULL FP16 grid (31K-51K vectors per function)
 with HW-accurate expected values from bit-exact EDA pipeline simulation.
 
 Usage:
-  cd /home/jmw/ing/eda_submission/hw/eda_u200/eda-nli-kernel/config
-  conda run -n vllm python gen_exhaustive_mem.py
+  cd gen
+  python gen_exhaustive_mem.py
 """
 
 import sys, os
 import numpy as np
 import torch
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
 from gen_eda_mem import (generate_mem_files as _gen_mem_base,
                          fp32_to_fp16_hex, fp32_to_fp16_bits)
 from gen_eda_mem_7s import hw_eda_forward_fma as hw_eda_forward_scalar
@@ -73,13 +74,15 @@ def generate_exhaustive(func_name, output_dir):
 
 
 if __name__ == '__main__':
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_dir = os.path.join(os.path.dirname(__file__),
+                              '..', 'hw', 'eda_u200', 'eda-nli-kernel', 'config')
+    config_dir = os.path.abspath(config_dir)
     funcs = ['silu', 'exp', 'rsqrt', 'gelu', 'sigmoid', 'tanh',
              'reciprocal', 'hardswish', 'mish']
 
     print("=== Generating exhaustive .mem files ===")
     for fn in funcs:
-        out = os.path.join(script_dir, fn)
+        out = os.path.join(config_dir, fn)
         generate_exhaustive(fn, out)
 
-    print(f"\nDone. Files in {script_dir}/<func>/")
+    print(f"\nDone. Files in {config_dir}/<func>/")

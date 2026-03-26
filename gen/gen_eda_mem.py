@@ -10,6 +10,7 @@ import sys, os, struct
 import numpy as np
 import torch
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
 from nli_eda import optimize_eda, get_function, get_domain, get_fp16_exponent_bins
 
 T_BITS = 10  # adaptive: left-justified to 10 bits (matches RTL T_BITS=10)

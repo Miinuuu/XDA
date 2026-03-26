@@ -1,6 +1,6 @@
 FUNC ?= silu
 ALL_FUNCS = silu gelu exp sigmoid tanh hardswish mish rsqrt reciprocal
-CONFIG_DIR = ../../config
+GEN_DIR = ../../../../../gen
 
 RTL_4S   = eda_nli_engine_4s.v ../../fpu/fp_adder.v
 TB_4S    = tb_eda_nli_engine_4s.sv
@@ -12,7 +12,7 @@ all: gen sim
 
 gen:
 	@echo "=== Generating EDA-NLI FMA .mem files for $(FUNC) ==="
-	cd $(CONFIG_DIR) && python3 gen_eda_mem_7s.py --func $(FUNC) --output-dir $(CURDIR)
+	python3 $(GEN_DIR)/gen_eda_mem_7s.py --func $(FUNC) --output-dir $(CURDIR)
 
 sim: gen
 	@echo "=== Compiling 4-stage FMA ==="
@@ -29,7 +29,7 @@ sim-all:
 	for func in $(ALL_FUNCS); do \
 		echo ""; \
 		echo "========== Testing: $$func =========="; \
-		cd $(CONFIG_DIR) && python3 gen_eda_mem_7s.py --func $$func --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error"; \
+		python3 $(GEN_DIR)/gen_eda_mem_7s.py --func $$func --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error"; \
 		result=$$(xsim $(SIM_4S) -runall 2>&1); \
 		echo "$$result" | grep -E "Results|Total|Max ULP|PASSED|FAILED"; \
 		if echo "$$result" | grep -q "ALL TESTS PASSED"; then \
@@ -49,7 +49,7 @@ sim-exhaustive:
 	for func in $(ALL_FUNCS); do \
 		echo ""; \
 		echo "========== Exhaustive: $$func =========="; \
-		cd $(CONFIG_DIR) && python3 gen_eda_mem_7s.py --func $$func --exhaustive --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error|Exhaustive"; \
+		python3 $(GEN_DIR)/gen_eda_mem_7s.py --func $$func --exhaustive --output-dir $(CURDIR) 2>&1 | grep -E "Complete|error|Exhaustive"; \
 		result=$$(xsim $(SIM_4S) -runall 2>&1); \
 		echo "$$result" | grep -E "Results|Total|Max ULP|PASSED|FAILED"; \
 		nvec=$$(echo "$$result" | grep -oP 'Total: \K[0-9]+'); \
