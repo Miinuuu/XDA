@@ -453,7 +453,13 @@ def main():
     clear_caches()
 
     part_a = run_part_a()
-    part_b = run_part_b()
+
+    try:
+        part_b = run_part_b()
+    except FileNotFoundError as e:
+        print(f"\n[SKIP] Part B: activation stats not found ({e})")
+        part_b = None
+
     errdist = run_errdist()
     ablation = run_ablation_budget()
     tab_funcs = run_tab_functions()
@@ -467,6 +473,7 @@ def main():
     }
 
     out_path = os.path.join(RESULTS_DIR, 'all_experiments.json')
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(out_path, 'w') as f:
         json.dump(all_results, f, indent=2)
     print(f"\nAll results saved to {out_path}")
@@ -485,12 +492,15 @@ def main():
         print(f"  {fn:12s} & {r['eda_mean']:.2f} & {r['eda_max']:.1f} & {r['nli_mean']:.2f} & {r['nli_max']:.1f}")
 
     print("\n--- tab:accuracy Part B ---")
-    for model_name, model_results in part_b.items():
-        print(f"  [{model_name}]")
-        for name in ['silu', 'softmax', 'rmsnorm']:
-            r = model_results[name]
-            label = name.capitalize() if name != 'rmsnorm' else 'RMSNorm'
-            print(f"    {label:12s} & {r['eda_mean']:.2f} & {r['eda_max']:.1f} & {r['nli_mean']:.2f} & {r['nli_max']:.1f}")
+    if part_b is not None:
+        for model_name, model_results in part_b.items():
+            print(f"  [{model_name}]")
+            for name in ['silu', 'softmax', 'rmsnorm']:
+                r = model_results[name]
+                label = name.capitalize() if name != 'rmsnorm' else 'RMSNorm'
+                print(f"    {label:12s} & {r['eda_mean']:.2f} & {r['eda_max']:.1f} & {r['nli_mean']:.2f} & {r['nli_max']:.1f}")
+    else:
+        print("  [SKIPPED] activation stats not available")
 
     print("\n--- tab:errdist-all ---")
     for fn in ALL_FUNCS:
