@@ -25,7 +25,6 @@ xsim.dir/
 *.xclbin
 *.link_summary
 *.compile_summary
-host
 packaged_kernel_*/
 tmp_kernel_pack_*/
 user-xo/
