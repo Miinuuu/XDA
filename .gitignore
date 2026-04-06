@@ -19,7 +19,7 @@ xsim.dir/
 *.hw/
 *.ip_user_files/
 *.sim/
-
+ 
 # Build outputs
 *.xo
 *.xclbin

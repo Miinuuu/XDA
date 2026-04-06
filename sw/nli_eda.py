@@ -498,15 +498,30 @@ def optimize_eda(func_name: str, max_lut: int = 254, max_k: int = 5,
         k = k_alloc[i]
         num_microbins = 2 ** k
 
-        cutpoints = torch.linspace(b_start, b_end, num_microbins + 1, device=device)
+        # For negative bins, mantissa bit-extraction maps micro_idx=0
+        # to the RIGHT edge (least negative). Reverse cutpoint order so
+        # LUT[base+0] = f(right_edge), matching HW addressing.
+        if sign == 1:
+            cutpoints = torch.linspace(b_end, b_start, num_microbins + 1, device=device)
+        else:
+            cutpoints = torch.linspace(b_start, b_end, num_microbins + 1, device=device)
         y_cut = func(cutpoints)
         # Clamp to FP16 representable range: inf in LUT causes NaN during
         # interpolation (inf - inf = NaN), so saturate to ±65504.
         y_cut = y_cut.clamp(-65504.0, 65504.0)
-        # Share boundary with previous bin only if they are contiguous in x
-        if i > 0 and b_start == bins[i-1][1]:
-            base_offsets.append(current_offset - 1)  # point to shared boundary
+        # Boundary sharing: adjacent bins share one LUT entry.
+        # Positive bins (ascending LUT): shared value at y_cut[0] (left edge)
+        # Negative bins (reversed LUT): shared value at y_cut[-1] (left edge, stored last)
+        contiguous = (i > 0 and abs(b_start - bins[i-1][1]) < 1e-30)
+        if contiguous and sign == 0 and bins[i-1][2] == 0:
+            # Positive → positive: share first element
+            base_offsets.append(current_offset - 1)
             all_lut_values.append(y_cut[1:])
+            current_offset += num_microbins
+        elif contiguous and sign == 1 and bins[i-1][2] == 1:
+            # Negative → negative: share last element (left edge in reversed LUT)
+            base_offsets.append(current_offset)
+            all_lut_values.append(y_cut[:-1])
             current_offset += num_microbins
         else:
             base_offsets.append(current_offset)
