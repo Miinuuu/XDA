@@ -31,25 +31,25 @@
 10FF  // [29] s=0 e=29 CLAMP(domain)
 10FF  // [30] s=0 e=30 CLAMP(domain)
 10FF  // [31] s=0 e=31 CLAMP(domain)
-00AF  // [32] s=1 e= 0 k=0 base=175
-00AE  // [33] s=1 e= 1 k=0 base=174
-00AD  // [34] s=1 e= 2 k=0 base=173
-00AC  // [35] s=1 e= 3 k=0 base=172
-00AB  // [36] s=1 e= 4 k=0 base=171
-00AA  // [37] s=1 e= 5 k=0 base=170
-00A9  // [38] s=1 e= 6 k=0 base=169
-00A8  // [39] s=1 e= 7 k=0 base=168
-00A7  // [40] s=1 e= 8 k=0 base=167
-00A6  // [41] s=1 e= 9 k=0 base=166
-00A5  // [42] s=1 e=10 k=0 base=165
-00A4  // [43] s=1 e=11 k=0 base=164
-04A0  // [44] s=1 e=12 k=2 base=160
-0698  // [45] s=1 e=13 k=3 base=152
-0888  // [46] s=1 e=14 k=4 base=136
-0A68  // [47] s=1 e=15 k=5 base=104
-0A48  // [48] s=1 e=16 k=5 base=72
-0A28  // [49] s=1 e=17 k=5 base=40
-0A08  // [50] s=1 e=18 k=5 base=8
+00B0  // [32] s=1 e= 0 k=0 base=176
+00AF  // [33] s=1 e= 1 k=0 base=175
+00AE  // [34] s=1 e= 2 k=0 base=174
+00AD  // [35] s=1 e= 3 k=0 base=173
+00AC  // [36] s=1 e= 4 k=0 base=172
+00AB  // [37] s=1 e= 5 k=0 base=171
+00AA  // [38] s=1 e= 6 k=0 base=170
+00A9  // [39] s=1 e= 7 k=0 base=169
+00A8  // [40] s=1 e= 8 k=0 base=168
+00A7  // [41] s=1 e= 9 k=0 base=167
+00A6  // [42] s=1 e=10 k=0 base=166
+00A5  // [43] s=1 e=11 k=0 base=165
+04A1  // [44] s=1 e=12 k=2 base=161
+0699  // [45] s=1 e=13 k=3 base=153
+0889  // [46] s=1 e=14 k=4 base=137
+0A69  // [47] s=1 e=15 k=5 base=105
+0A49  // [48] s=1 e=16 k=5 base=73
+0A29  // [49] s=1 e=17 k=5 base=41
+0A09  // [50] s=1 e=18 k=5 base=9
 0600  // [51] s=1 e=19 k=3 base=0
 1000  // [52] s=1 e=20 CLAMP(domain)
 1000  // [53] s=1 e=21 CLAMP(domain)
