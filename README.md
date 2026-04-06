@@ -1,45 +1,72 @@
-# EDA: Exponent-Direct Addressing for Nonlinear Function Approximation
+# XDA: Representation-Aware Exponent-Direct Addressing for Efficient Shared Nonlinear Units
 
-Zero-FP-arithmetic address generation using FP16 bit-field extraction.
+Hardware-software co-design for efficient nonlinear function approximation via **zero-FP-arithmetic address generation** using FP16 bit-field extraction.
 
-Supported functions: `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `exp`, `reciprocal`, `rsqrt`
+## Key Idea
+
+Traditional nonlinear interpolation (NLI) requires comparators and multipliers to locate intervals and compute addresses. XDA eliminates this overhead by directly extracting the FP16 exponent and mantissa bits to generate LUT addresses -- **no comparators, no multipliers, just wiring**.
+
+```
+FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
+                 │           │              │
+                 │           │         ┌────┴────┐
+                 │           │     top-K bits  remaining bits
+                 │           │         │           │
+                 ▼           ▼         ▼           ▼
+            ┌─────────────────────┐  ┌───────────────┐
+            │  Config ROM lookup  │  │ Interpolation  │
+            │  (bin select)       │  │ fraction t     │
+            └────────┬────────────┘  └───────┬───────┘
+                     │                       │
+                     ▼                       ▼
+              LUT[base + micro_idx]    y = y0 + t*(y1-y0)
+```
+
+**Supported functions (9):** `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `exp`, `reciprocal`, `rsqrt`
+
+## Method Overview
+
+| Component | Description |
+|-----------|-------------|
+| **Exponent-Direct Addressing** | FP16 exponent bits select the bin; top-K mantissa bits select the micro-bin within it. Remaining bits become the interpolation fraction. |
+| **Knapsack DP Allocation** | Given a LUT budget W, allocates mantissa bits per bin to minimize total approximation error (solves a 0/1 knapsack). |
+| **Boundary Sharing** | Adjacent exponent bins share LUT endpoints, reducing LUT size by ~10-20% without accuracy loss. |
+| **4-Stage FMA Pipeline** | Stage 1: bit-extract & address gen. Stage 2: dual SRAM read & FP16 subtract. Stage 3: FMA multiply & align. Stage 4: normalize & round (RNE). |
 
 ## Directory Structure
 
 ```
 ├── run_pipeline.sh              # Full pipeline automation script
 ├── sw/                          # Python software
-│   ├── nli_eda.py               # EDA core (optimize, evaluate)
-│   ├── nli_eda_engine.py        # EDA engine implementation
-│   ├── ablation_sweep.py        # Ablation study
-│   └── run_all_experiments.py   # Run all experiments
+│   ├── nli_eda.py               # XDA core: knapsack DP optimization & evaluation
+│   ├── nli_eda_engine.py        # PyTorch forward-pass simulator (3/4-stage)
+│   ├── ablation_sweep.py        # Ablation study (budget, bit-width, strategy)
+│   └── run_all_experiments.py   # Run all paper experiments
 │
 ├── gen/                         # Memory file generators
-│   ├── gen_eda_mem.py           # EDA engine .mem generation
-│   ├── gen_eda_mem_fma.py       # EDA 4-stage FMA .mem generation
-│   └── gen_exhaustive_mem.py    # Exhaustive test vector generation
+│   ├── gen_eda_mem.py           # Base .mem generator with bit-exact simulation
+│   ├── gen_eda_mem_fma.py       # FMA-variant .mem generator (4-stage)
+│   └── gen_exhaustive_mem.py    # Exhaustive FP16 test vector generation
 │
 └── hw/                          # Hardware RTL
-    ├── fpu/                     # FP adder IP
-    └── eda_u200/                # Xilinx U200 Vitis kernel
-        └── eda-nli-kernel/
-            ├── src/IP/          # Kernel RTL (encrypted .vp)
-            ├── src/host/        # Host application (C++)
-            ├── src/nli_engine/  # Standalone engine RTL + testbench
-            ├── src/c-model/     # C reference model
-            ├── config/          # LUT config & test vectors (.mem)
-            └── Makefile
+    ├── fpu/
+    │   └── fp_adder.v           # Parameterized FP16/FP32 adder
+    └── eda_u200/eda-nli-kernel/
+        ├── src/IP/              # Kernel RTL (encrypted .vp + wrappers)
+        ├── src/nli_engine/      # Standalone engine RTL + testbench
+        ├── src/host/            # Host application (C++)
+        ├── src/c-model/         # C reference model
+        ├── config/              # LUT config & test vectors (.mem)
+        └── Makefile
 ```
 
 ## Requirements
 
 - **SW**: Python 3, PyTorch, NumPy
-- **EDA RTL Simulation**: Vivado (xvlog/xelab/xsim)
+- **RTL Simulation**: Vivado (xvlog/xelab/xsim)
 - **FPGA Build & Run**: Vitis 2021.1+, Xilinx U200 platform (`xilinx_u200_gen3x16_xdma_2_202110_1`)
 
 ## Quick Start
-
-`run_pipeline.sh` automates the full pipeline from SW optimization to FPGA execution.
 
 ```bash
 # Full pipeline (SW -> generate .mem -> RTL sim -> Vitis build -> FPGA run)
@@ -60,37 +87,39 @@ Supported functions: `sigmoid`, `tanh`, `silu`, `mish`, `gelu`, `hardswish`, `ex
 
 The overall flow follows three stages: **optimize** (sw) -> **generate .mem** (gen) -> **simulate or run on FPGA** (hw).
 
-### Step 1: SW -- Run Optimization & Experiments
+### Step 1: SW -- Optimization & Experiments
 
-The `sw/` scripts find optimal LUT configurations for each nonlinear function. This step is independent of hardware.
+Find optimal LUT configurations for each nonlinear function via knapsack DP.
 
 ```bash
 cd sw
 
-# Run all experiments
-python3 run_all_experiments.py
-
-# Or run individually
-python3 nli_eda.py           # EDA optimization + evaluation
-python3 ablation_sweep.py    # Ablation study
+python3 run_all_experiments.py       # Run all experiments
+python3 nli_eda.py                   # XDA optimization + evaluation
+python3 ablation_sweep.py            # Ablation study
 ```
 
 ### Step 2: Generate .mem Files
 
-The `gen/` scripts read optimization results from `sw/` and produce `.mem` files (config ROM, function LUT, test vectors) that hardware consumes.
+Produce config ROM, function LUT, and test vectors for hardware.
 
 ```bash
-# Single function -- generates: config_rom.mem, func_lut.mem, test_vectors_4s.mem
+# Single function
 python3 gen/gen_eda_mem_fma.py --func silu --output-dir hw/eda_u200/eda-nli-kernel/src/nli_engine/
 
-# All 9 functions -- exhaustive FP16 test vectors into config/<func>/
-cd gen
-python3 gen_exhaustive_mem.py
+# All 9 functions -- exhaustive FP16 test vectors
+cd gen && python3 gen_exhaustive_mem.py
 ```
 
-### Step 3a: RTL Simulation -- EDA Engine (Vivado xsim)
+**Generated files per function:**
 
-Simulates the 4-stage FMA EDA engine with Xilinx simulator.
+| File | Description |
+|------|-------------|
+| `config_rom.mem` | 64-entry ROM: `[clamp(1) \| reserved(3) \| k_bits(3) \| base_offset(9)]` per exponent/sign |
+| `func_lut.mem` | LUT values in FP16 hex (~250-300 entries) |
+| `test_vectors.mem` | `<x_hex> <y_hex>` pairs for verification |
+
+### Step 3a: RTL Simulation (Vivado xsim)
 
 ```bash
 cd hw/eda_u200/eda-nli-kernel/src/nli_engine
@@ -98,42 +127,65 @@ cd hw/eda_u200/eda-nli-kernel/src/nli_engine
 make all              # Generate .mem + simulate (default: silu)
 make all FUNC=gelu    # Specify function
 make sim-all          # Test all 9 functions
-make sim-exhaustive   # Exhaustive FP16 verification (all 9 functions)
+make sim-exhaustive   # Exhaustive FP16 verification
 ```
 
-### Step 3b: FPGA -- Vitis U200 Kernel Build & Run
-
-Builds the kernel xclbin and runs on FPGA (or HW emulation). The host application loads `config/<func>/*.mem` files at runtime via AXI-Lite.
+### Step 3b: FPGA Build & Run (Vitis U200)
 
 ```bash
 cd hw/eda_u200/eda-nli-kernel
 
-# --- HW Emulation ---
+# HW Emulation
 make all TARGET=hw_emu
-make run TARGET=hw_emu FUNC=sigmoid       # Single function
-make run_all TARGET=hw_emu                # All 9 functions
+make run TARGET=hw_emu FUNC=sigmoid
+make run_all TARGET=hw_emu
 
-# --- HW (actual FPGA) ---
+# Real FPGA
 make all TARGET=hw
 make run TARGET=hw FUNC=sigmoid
 make run_all TARGET=hw
 ```
 
+## Hardware Architecture
+
+32 parallel XDA engines on a 512-bit AXI datapath (32 FP16 elements/cycle):
+
+```
+DDR ──[AXI Read Master]──> PISO (512b→32×16b)
+                               │
+                    ┌──────────┼──────────┐
+                    ▼          ▼          ▼
+              XDA Engine  XDA Engine ... XDA Engine  (×32)
+                    │          │          │
+                    └──────────┼──────────┘
+                               │
+                           SIPO (32×16b→512b) ──[AXI Write Master]──> DDR
+```
+
+**4-Stage Pipeline (per engine):**
+
+| Stage | Operation | FP Gates |
+|-------|-----------|----------|
+| S1 | Bit-extract, config ROM lookup, address gen | **0** |
+| S2 | Dual SRAM read, FP16 subtract (y1-y0) | 1 subtractor |
+| S3 | Integer multiply, exponent align | 0 (integer) |
+| S4 | Normalize, round-to-nearest-even | 1 rounder |
+
 ## Pipeline Summary
 
 ```
-sw/nli_eda.py          gen/gen_eda_mem_fma.py       hw/eda_u200/.../src/nli_engine/
-(optimize LUT)  -->   (produce .mem files)   -->   (RTL simulation, xsim)
-                            |
+sw/nli_eda.py          gen/gen_eda_mem_fma.py       hw/.../src/nli_engine/
+(knapsack DP     -->  (produce .mem files)   -->   (RTL simulation, xsim)
+ optimize LUT)              |
                             |  gen/gen_exhaustive_mem.py
                             v
-                       hw/eda_u200/.../config/<func>/*.mem
+                       hw/.../config/<func>/*.mem
                             |
                             v
-                       hw/eda_u200/.../Makefile
+                       hw/.../Makefile
                        (Vitis build -> xclbin -> FPGA run)
 ```
 
 ## Note
 
-The core EDA RTL (`eda_nli_engine_4s.vp`) is currently provided in encrypted form. Simulation, synthesis, and bitstream generation work as expected. The unencrypted source code will be released upon paper acceptance.
+The core XDA RTL (`eda_nli_engine_4s.vp`) is provided in encrypted form. Simulation, synthesis, and bitstream generation work as expected. The unencrypted source will be released upon paper acceptance.
