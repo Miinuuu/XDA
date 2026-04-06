@@ -188,4 +188,4 @@ sw/nli_eda.py          gen/gen_eda_mem_fma.py       hw/.../src/nli_engine/
 
 ## Note
 
-The core XDA RTL (`eda_nli_engine_4s.vp`) is provided in encrypted form. Simulation, synthesis, and bitstream generation work as expected. The unencrypted source will be released upon paper acceptance.
+The core XDA RTL (`eda_nli_engine_4s.vp`) is provided in encrypted form. Simulation, synthesis, and bitstream generation work as expected. The paper is currently under review; the unencrypted source will be released upon acceptance.
