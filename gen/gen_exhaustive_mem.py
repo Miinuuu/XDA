@@ -20,8 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
 from gen_eda_mem import (generate_mem_files as _gen_mem_base,
                          fp32_to_fp16_hex, fp32_to_fp16_bits)
 from gen_eda_mem_fma import hw_eda_forward_fma as hw_eda_forward_scalar
-from nli_eda import optimize_eda
-from nli_dp import get_function, get_domain, generate_fp16_grid
+from nli_eda import optimize_eda, get_function, get_domain, _generate_fp16_grid
 
 
 def generate_exhaustive(func_name, output_dir):
@@ -56,7 +55,7 @@ def generate_exhaustive(func_name, output_dir):
             lut_vals.append(val)
 
     # 3. Exhaustive test vectors: ALL FP16 grid points
-    grid = generate_fp16_grid(get_domain(func_name))
+    grid = _generate_fp16_grid(get_domain(func_name), 'cpu')
     n_total = len(grid)
 
     with open(os.path.join(output_dir, 'test_vectors.mem'), 'w') as f:

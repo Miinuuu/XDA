@@ -49,9 +49,9 @@ __pycache__/
 *~
 
 # Generated results
-sw/nli_results/
+sw/eda_results/
 
-# Simulation-generated .mem (in nli_engine working dir)
+# Simulation-generated .mem (in engine working dir)
 hw/eda_u200/eda-nli-kernel/src/nli_engine/*.mem
 
 # IDE / tool settings
