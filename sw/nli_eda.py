@@ -25,7 +25,7 @@ import time
 from typing import Tuple, List, Callable, Optional, Dict
 
 TAU = 2 ** (-14)
-_RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nli_results')
+_RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eda_results')
 _OPTIMAL_DOMAINS_PATH = os.path.join(_RESULTS_DIR, 'optimal_domains.json')
 
 # ─────────────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ def get_domain(name: str) -> Tuple[float, float]:
     """
     Knapsack optimization domain per function.
 
-    Loads from nli_results/optimal_domains.json if available
+    Loads from eda_results/optimal_domains.json if available
     (produced by --optimize-domain), otherwise falls back to hardcoded defaults.
     """
     loaded = _load_optimal_domains()

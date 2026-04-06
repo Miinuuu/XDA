@@ -18,7 +18,6 @@ set -e
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SW_DIR="$ROOT_DIR/sw"
 GEN_DIR="$ROOT_DIR/gen"
-NLI_DIR="$ROOT_DIR/hw/nli"
 EDA_DIR="$ROOT_DIR/hw/eda_u200/eda-nli-kernel"
 CONFIG_DIR="$EDA_DIR/config"
 ENGINE_DIR="$EDA_DIR/src/nli_engine"

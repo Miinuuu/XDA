@@ -19,11 +19,9 @@ from nli_eda import (
 )
 from nli_eda_engine import _EDA_CACHE
 from ablation_sweep import eda_forward_with_config, eval_on_fp16_grid
-from nli_dp import PAPER_CUTPOINTS, generate_fp16_grid
-from nli_engine import build_lut, nli_forward
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nli_results')
+RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eda_results')
 
 # Model configurations for Part B
 MODEL_CONFIGS = {
@@ -51,7 +49,7 @@ def clear_caches():
     print("Caches cleared.")
 
 
-# ─── Part A: FP16 Full-Range Elementary Functions ─────────────
+# --- Part A: FP16 Full-Range Elementary Functions ---
 
 def run_part_a():
     """9 elementary functions on exhaustive FP16 grid."""
@@ -68,32 +66,22 @@ def run_part_a():
         valid = torch.isfinite(y_ref)
         grid_v, y_ref_v = grid[valid], y_ref[valid]
 
-        # EDA-NLI
+        # EDA
         cfg = optimize_eda(fn, verbose=False, device=DEVICE)
         y_eda = eda_forward_with_config(grid_v, cfg, t_bits='adaptive')
         eda_rel = torch.abs(y_eda.float() - y_ref_v) / torch.clamp(torch.abs(y_ref_v), min=TAU)
 
-        # NLI
-        cuts = torch.tensor(PAPER_CUTPOINTS[fn], dtype=torch.float32)
-        p, m, l = build_lut(func, cuts, 32)
-        p, m, l = p.to(DEVICE), m.to(DEVICE), l.to(DEVICE)
-        y_nli = nli_forward(grid_v, p, m, l, 32, fp16_hw=True)
-        nli_rel = torch.abs(y_nli.float() - y_ref_v) / torch.clamp(torch.abs(y_ref_v), min=TAU)
-
         results[fn] = {
             'eda_mean': eda_rel.mean().item() * 1e4,
             'eda_max': eda_rel.max().item() * 1e4,
-            'nli_mean': nli_rel.mean().item() * 1e4,
-            'nli_max': nli_rel.max().item() * 1e4,
             'n_points': len(grid_v),
         }
-        print(f"  {fn:12s}: EDA mean={results[fn]['eda_mean']:.2f} max={results[fn]['eda_max']:.1f} | "
-              f"NLI mean={results[fn]['nli_mean']:.2f} max={results[fn]['nli_max']:.1f}")
+        print(f"  {fn:12s}: EDA mean={results[fn]['eda_mean']:.2f} max={results[fn]['eda_max']:.1f}")
 
     return results
 
 
-# ─── Part B: Profiled Activation Distributions ────────────────
+# --- Part B: Profiled Activation Distributions ---
 
 def _sample_from_hist(hist_bins, hist_counts, n_samples):
     """Sample from a histogram distribution."""
@@ -154,13 +142,9 @@ def run_part_b_silu(stats, n_samples=500000, n_trials=50):
     bins, counts = _aggregate_histograms(stats, 'silu_input')
 
     eda_means, eda_maxs = [], []
-    nli_means, nli_maxs = [], []
 
     func = get_function('silu')
     cfg = optimize_eda('silu', verbose=False, device=DEVICE)
-    cuts = torch.tensor(PAPER_CUTPOINTS['silu'], dtype=torch.float32)
-    p, m, l = build_lut(func, cuts, 32)
-    p, m, l = p.to(DEVICE), m.to(DEVICE), l.to(DEVICE)
 
     for trial in range(n_trials):
         x = _sample_from_hist(bins, counts, n_samples).to(DEVICE)
@@ -169,25 +153,18 @@ def run_part_b_silu(stats, n_samples=500000, n_trials=50):
         x_v, y_ref_v = x[valid], y_ref[valid]
 
         y_eda = eda_forward_with_config(x_v, cfg, t_bits='adaptive')
-        y_nli = nli_forward(x_v, p, m, l, 32, fp16_hw=True)
 
         denom = torch.clamp(torch.abs(y_ref_v), min=TAU)
         eda_rel = torch.abs(y_eda.float() - y_ref_v) / denom
-        nli_rel = torch.abs(y_nli.float() - y_ref_v) / denom
 
         eda_means.append(eda_rel.mean().item())
         eda_maxs.append(eda_rel.max().item())
-        nli_means.append(nli_rel.mean().item())
-        nli_maxs.append(nli_rel.max().item())
 
     result = {
         'eda_mean': np.mean(eda_means) * 1e4,
         'eda_max': np.mean(eda_maxs) * 1e4,
-        'nli_mean': np.mean(nli_means) * 1e4,
-        'nli_max': np.mean(nli_maxs) * 1e4,
     }
     print(f"    EDA: mean={result['eda_mean']:.2f} max={result['eda_max']:.1f}")
-    print(f"    NLI: mean={result['nli_mean']:.2f} max={result['nli_max']:.1f}")
     return result
 
 
@@ -202,15 +179,7 @@ def run_part_b_softmax(stats, head_dim=64, n_heads=14, n_trials=50):
     cfg_exp = optimize_eda('exp', verbose=False, device=DEVICE)
     cfg_recip = optimize_eda('reciprocal', verbose=False, device=DEVICE)
 
-    cuts_exp = torch.tensor(PAPER_CUTPOINTS['exp'], dtype=torch.float32)
-    p_e, m_e, l_e = build_lut(func_exp, cuts_exp, 32)
-    p_e, m_e, l_e = p_e.to(DEVICE), m_e.to(DEVICE), l_e.to(DEVICE)
-    cuts_recip = torch.tensor(PAPER_CUTPOINTS['reciprocal'], dtype=torch.float32)
-    p_r, m_r, l_r = build_lut(func_recip, cuts_recip, 32)
-    p_r, m_r, l_r = p_r.to(DEVICE), m_r.to(DEVICE), l_r.to(DEVICE)
-
     eda_means, eda_maxs = [], []
-    nli_means, nli_maxs = [], []
 
     seq_len = 128
     batch_heads = 2 * n_heads
@@ -233,29 +202,17 @@ def run_part_b_softmax(stats, head_dim=64, n_heads=14, n_trials=50):
         recip_eda = eda_forward_with_config(exp_sum, cfg_recip, t_bits='adaptive')
         y_eda = exp_eda * recip_eda
 
-        # NLI softmax
-        exp_nli = nli_forward(x_shifted, p_e, m_e, l_e, 32, fp16_hw=True)
-        exp_sum_nli = exp_nli.sum(dim=-1, keepdim=True)
-        recip_nli = nli_forward(exp_sum_nli, p_r, m_r, l_r, 32, fp16_hw=True)
-        y_nli = exp_nli * recip_nli
-
         denom = torch.clamp(torch.abs(y_ref), min=TAU)
         eda_rel = torch.abs(y_eda.float() - y_ref) / denom
-        nli_rel = torch.abs(y_nli.float() - y_ref) / denom
 
         eda_means.append(eda_rel.mean().item())
         eda_maxs.append(eda_rel.max().item())
-        nli_means.append(nli_rel.mean().item())
-        nli_maxs.append(nli_rel.max().item())
 
     result = {
         'eda_mean': np.mean(eda_means) * 1e4,
         'eda_max': np.mean(eda_maxs) * 1e4,
-        'nli_mean': np.mean(nli_means) * 1e4,
-        'nli_max': np.mean(nli_maxs) * 1e4,
     }
     print(f"    EDA: mean={result['eda_mean']:.2f} max={result['eda_max']:.1f}")
-    print(f"    NLI: mean={result['nli_mean']:.2f} max={result['nli_max']:.1f}")
     return result
 
 
@@ -264,14 +221,9 @@ def run_part_b_rmsnorm(stats, hidden_dim=896, eps=1e-6, n_trials=50):
     print("\n  Part B: RMSNorm (profiled distribution)")
     bins, counts = _aggregate_histograms(stats, 'rmsnorm_input')
 
-    func_rsqrt = get_function('rsqrt')
     cfg_rsqrt = optimize_eda('rsqrt', verbose=False, device=DEVICE)
-    cuts = torch.tensor(PAPER_CUTPOINTS['rsqrt'], dtype=torch.float32)
-    p, m, l = build_lut(func_rsqrt, cuts, 32)
-    p, m, l = p.to(DEVICE), m.to(DEVICE), l.to(DEVICE)
 
     eda_means, eda_maxs = [], []
-    nli_means, nli_maxs = [], []
 
     for trial in range(n_trials):
         # Sample hidden states from profiled distribution
@@ -290,27 +242,17 @@ def run_part_b_rmsnorm(stats, hidden_dim=896, eps=1e-6, n_trials=50):
         inv_rms_eda = eda_forward_with_config(variance, cfg_rsqrt, t_bits='adaptive')
         y_eda = (x_f32 * inv_rms_eda * weight).half().float()
 
-        # NLI
-        inv_rms_nli = nli_forward(variance, p, m, l, 32, fp16_hw=True)
-        y_nli = (x_f32 * inv_rms_nli * weight).half().float()
-
         denom = torch.clamp(torch.abs(y_ref), min=TAU)
         eda_rel = torch.abs(y_eda - y_ref) / denom
-        nli_rel = torch.abs(y_nli - y_ref) / denom
 
         eda_means.append(eda_rel.mean().item())
         eda_maxs.append(eda_rel.max().item())
-        nli_means.append(nli_rel.mean().item())
-        nli_maxs.append(nli_rel.max().item())
 
     result = {
         'eda_mean': np.mean(eda_means) * 1e4,
         'eda_max': np.mean(eda_maxs) * 1e4,
-        'nli_mean': np.mean(nli_means) * 1e4,
-        'nli_max': np.mean(nli_maxs) * 1e4,
     }
     print(f"    EDA: mean={result['eda_mean']:.2f} max={result['eda_max']:.1f}")
-    print(f"    NLI: mean={result['nli_mean']:.2f} max={result['nli_max']:.1f}")
     return result
 
 
@@ -335,7 +277,7 @@ def run_part_b():
     return results
 
 
-# ─── Error Distribution Table ────────────────────────────────
+# --- Error Distribution Table ---
 
 def run_errdist():
     """Error distribution: % of FP16 points above thresholds."""
@@ -360,26 +302,18 @@ def run_errdist():
         y_eda = eda_forward_with_config(grid_v, cfg, t_bits='adaptive')
         eda_rel = torch.abs(y_eda.float() - y_ref_v) / denom
 
-        # NLI
-        cuts = torch.tensor(PAPER_CUTPOINTS[fn], dtype=torch.float32)
-        p, m, l = build_lut(func, cuts, 32)
-        p, m, l = p.to(DEVICE), m.to(DEVICE), l.to(DEVICE)
-        y_nli = nli_forward(grid_v, p, m, l, 32, fp16_hw=True)
-        nli_rel = torch.abs(y_nli.float() - y_ref_v) / denom
-
         eda_pcts = [(eda_rel > t).float().mean().item() * 100 for t in thresholds]
-        nli_pcts = [(nli_rel > t).float().mean().item() * 100 for t in thresholds]
 
-        results[fn] = {'eda': eda_pcts, 'nli': nli_pcts}
-        print(f"  {fn:12s}: EDA {[f'{p:.1f}' for p in eda_pcts]} | NLI {[f'{p:.1f}' for p in nli_pcts]}")
+        results[fn] = {'eda': eda_pcts}
+        print(f"  {fn:12s}: EDA {[f'{p:.1f}' for p in eda_pcts]}")
 
     return results
 
 
-# ─── Ablation Budget ─────────────────────────────────────────
+# --- Ablation Budget ---
 
 def run_ablation_budget():
-    """LUT budget sweep: W ∈ {62, 126, 254, 510}."""
+    """LUT budget sweep: W in {62, 126, 254, 510}."""
     print("\n" + "=" * 70)
     print("  ABLATION: LUT Budget Scaling")
     print("=" * 70)
@@ -387,11 +321,9 @@ def run_ablation_budget():
     from nli_eda import optimize_eda_with_allocation
 
     budgets = [62, 126, 254, 510]
-    nli_Dn = {62: 8, 126: 16, 254: 32, 510: 64}
-    ablation_funcs = ALL_FUNCS
     results = {}
 
-    for fname in ablation_funcs:
+    for fname in ALL_FUNCS:
         results[fname] = {}
         for W in budgets:
             print(f"  {fname} W={W}...", end='', flush=True)
@@ -401,27 +333,15 @@ def run_ablation_budget():
             res_ks = eval_on_fp16_grid(
                 fname, lambda x, c=cfg_ks: eda_forward_with_config(x, c, t_bits='adaptive'), DEVICE)
 
-            # NLI
-            D_n = nli_Dn[W]
-            func = get_function(fname)
-            cuts = torch.tensor(PAPER_CUTPOINTS[fname], dtype=torch.float32)
-            p, m, l = build_lut(func, cuts, D_n)
-            p, m, l = p.to(DEVICE), m.to(DEVICE), l.to(DEVICE)
-            res_nli = eval_on_fp16_grid(
-                fname,
-                lambda x, pp=p, mm=m, ll=l, dn=D_n: nli_forward(x, pp, mm, ll, dn, fp16_hw=True),
-                DEVICE)
-
             results[fname][W] = {
                 'knapsack_mean': res_ks['mean_rel'] * 1e4,
-                'nli_mean': res_nli['mean_rel'] * 1e4,
             }
-            print(f" KS={results[fname][W]['knapsack_mean']:.2f} NLI={results[fname][W]['nli_mean']:.2f}")
+            print(f" KS={results[fname][W]['knapsack_mean']:.2f}")
 
     return results
 
 
-# ─── Tab:Functions ────────────────────────────────────────────
+# --- Tab:Functions ---
 
 def run_tab_functions():
     """Collect config data for tab:functions."""
@@ -445,7 +365,7 @@ def run_tab_functions():
     return results
 
 
-# ─── Main ─────────────────────────────────────────────────────
+# --- Main ---
 
 def main():
     t0 = time.time()
@@ -489,7 +409,7 @@ def main():
     print("\n--- tab:accuracy Part A ---")
     for fn in ALL_FUNCS:
         r = part_a[fn]
-        print(f"  {fn:12s} & {r['eda_mean']:.2f} & {r['eda_max']:.1f} & {r['nli_mean']:.2f} & {r['nli_max']:.1f}")
+        print(f"  {fn:12s} & {r['eda_mean']:.2f} & {r['eda_max']:.1f}")
 
     print("\n--- tab:accuracy Part B ---")
     if part_b is not None:
@@ -498,7 +418,7 @@ def main():
             for name in ['silu', 'softmax', 'rmsnorm']:
                 r = model_results[name]
                 label = name.capitalize() if name != 'rmsnorm' else 'RMSNorm'
-                print(f"    {label:12s} & {r['eda_mean']:.2f} & {r['eda_max']:.1f} & {r['nli_mean']:.2f} & {r['nli_max']:.1f}")
+                print(f"    {label:12s} & {r['eda_mean']:.2f} & {r['eda_max']:.1f}")
     else:
         print("  [SKIPPED] activation stats not available")
 
@@ -506,16 +426,12 @@ def main():
     for fn in ALL_FUNCS:
         r = errdist[fn]
         eda_s = " & ".join(f"{v:.1f}" for v in r['eda'])
-        nli_s = " & ".join(f"{v:.1f}" for v in r['nli'])
         print(f"  {fn:12s} EDA: {eda_s}")
-        print(f"  {fn:12s} NLI: {nli_s}")
 
     print("\n--- tab:abl-budget ---")
     for fname in ALL_FUNCS:
         ks_vals = " & ".join(f"{ablation[fname][W]['knapsack_mean']:.2f}" for W in [62,126,254,510])
-        nli_vals = " & ".join(f"{ablation[fname][W]['nli_mean']:.2f}" for W in [62,126,254,510])
         print(f"  {fname:12s} KS:  {ks_vals}")
-        print(f"  {fname:12s} NLI: {nli_vals}")
 
     print("\n--- tab:functions ---")
     for fn in ALL_FUNCS:
