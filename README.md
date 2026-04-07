@@ -52,7 +52,7 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
     ├── fpu/
     │   └── fp_adder.v           # Parameterized FP16/FP32 adder
     └── eda_u200/eda-nli-kernel/
-        ├── src/IP/              # Kernel RTL (encrypted .vp + wrappers)
+        ├── src/IP/              # Kernel RTL (wrappers)
         ├── src/nli_engine/      # Standalone engine RTL + testbench
         ├── src/host/            # Host application (C++)
         ├── src/c-model/         # C reference model
@@ -186,6 +186,3 @@ sw/nli_eda.py          gen/gen_eda_mem_fma.py       hw/.../src/nli_engine/
                        (Vitis build -> xclbin -> FPGA run)
 ```
 
-## Note
-
-The core XDA RTL (`eda_nli_engine_4s.vp`) is provided in encrypted form. Simulation, synthesis, and bitstream generation work as expected. The paper is currently under review; the unencrypted source will be released upon acceptance.
