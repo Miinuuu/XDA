@@ -95,7 +95,7 @@ exe: $(EXECUTABLE)
 xclbin: $(XCLBIN)/eda.$(TARGET).xclbin
 
 # XO from RTL
-$(XO)/eda.xo: ./src/xml/user.xml ./scripts/package_kernel.tcl ./scripts/gen_xo.tcl ./src/IP/*.sv ./src/IP/*.v
+$(XO)/eda.xo: ./src/xml/user.xml ./scripts/package_kernel.tcl ./scripts/gen_xo.tcl ./src/IP/*.sv ./src/IP/*.v ./src/IP/*.vp
 	mkdir -p $(XO)
 	$(VIVADO) -mode batch -source scripts/gen_xo.tcl -tclargs $(XO)/eda.xo eda $(TARGET) $(DEVICE)
 
