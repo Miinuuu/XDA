@@ -2,7 +2,7 @@ FUNC ?= silu
 ALL_FUNCS = silu gelu exp sigmoid tanh hardswish mish rsqrt reciprocal
 GEN_DIR = ../../../../../gen
 
-RTL_4S   = eda_nli_engine_4s.v ../IP/fp_adder.v
+RTL_4S   = eda_nli_engine_4s.vp ../IP/fp_adder.v
 TB_4S    = tb_eda_nli_engine_4s.sv
 SIM_4S   = sim_eda_4s
 
