@@ -72,6 +72,10 @@ PWR_DESIGN=eda_nli_engine_4s PWR_MODE=uniform \
 
 ## Notes
 
+- **Tool versions**: the paper's reports were produced with Vivado 2024.1
+  (xcu200, `clock.xdc` = 2.0 ns) and OpenROAD-flow-scripts on Nangate45.
+  A Vivado 2024.2 rerun reproduces the FPGA utilization within ±2 CLB LUTs
+  and identical FF counts, so nearby versions are expected to match closely.
 - Pipeline staging and address-arithmetic precision are fixed in the RTL
   (not synthesis-dependent); NLI uses the paper-provided cutpoints emitted by
   `memgen/gen_nli_mem.py`, and per-bin LUT budgets are the generated `.mem`
