@@ -91,10 +91,6 @@ def eda_forward_with_config(x_input, config, t_bits=None):
     n_bins = len(bin_starts)
     bin_ends = config.bin_ends.float().to(device)
 
-    # Domain clamp on the input (edges are FP16-exact powers of two), so
-    # out-of-domain inputs evaluate to the corresponding edge value.
-    x_flat = x_flat.clamp(bin_starts.min().item(), bin_ends.max().item())
-
     # RTL-faithful bin assignment: extract {sign, exp} from FP16 bit field
     # Build sign_exp → bin_idx lookup from config.bins
     se_to_idx = {}
@@ -112,6 +108,11 @@ def eda_forward_with_config(x_input, config, t_bits=None):
     for (s, e), idx in se_to_idx.items():
         mask = (signs == s) & (exps == e)
         bin_idx[mask] = idx
+
+    # Inputs outside domain (value-axis layout: global LUT[0] = f(domain_lo),
+    # LUT[-1] = f(domain_hi)); overridden after interpolation below.
+    too_low = x_flat < bin_starts[0]
+    too_high = x_flat > bin_ends[-1]
 
     b_start = bin_starts[bin_idx]
     b_end = bin_ends[bin_idx]
@@ -153,6 +154,9 @@ def eda_forward_with_config(x_input, config, t_bits=None):
     diff = (y1 - y0)
     product = (t.half() * diff).half()
     y = (y0 + product).half().float()
+
+    y = torch.where(too_low, lut_fp16[0].float(), y)
+    y = torch.where(too_high, lut_fp16[-1].float(), y)
 
     return y.reshape(original_shape).to(x_dtype)
 
