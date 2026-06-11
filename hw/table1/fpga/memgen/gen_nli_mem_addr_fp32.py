@@ -16,6 +16,7 @@ import sys
 import numpy as np
 import torch
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'sw'))
 
 from nli_dp import get_domain, get_function
 from nli_engine import build_lut_from_paper, nli_forward
