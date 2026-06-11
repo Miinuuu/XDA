@@ -77,10 +77,12 @@ cd sw && python3 run_all_experiments.py
 
 This rebuilds every XDA LUT configuration (Knapsack DP included), evaluates the
 exhaustive FP16 grids, and evaluates the NLI baseline from the paper-provided
-cutpoints (`nli_dp.py`). Known benign deviation: the Knapsack allocator lands
-on a near-tied GELU allocation — in our rerun the max error improves to 303.4
-(printed: 329.6) and the mean shifts from 2.15 to 2.17 — no comparison
-changes; all other rows reproduce the printed values.
+cutpoints (`nli_dp.py`). Known benign deviations: the Knapsack allocator lands
+on near-tied solutions for two functions — GELU (mean 2.17 vs. printed 2.15,
+max improves to 303.4 vs. 329.6) and rsqrt (mean 10.51 vs. 10.56) — with no
+comparison changing. All other Part A cells reproduce the printed values;
+Part B reproduces within its 50-trial Monte-Carlo protocol (means to ~0.2%,
+trial-averaged maxima vary more on heavy-tailed inputs).
 
 **Table 1 (post-PnR hardware)** — complete FPGA and ASIC flows for XDA, NLI,
 and NN-LUT, including DSP-enabled variants: see [`hw/table1/README.md`](hw/table1/README.md).
