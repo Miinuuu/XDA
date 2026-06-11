@@ -1,0 +1,91 @@
+`timescale 1ns/1ps
+
+module tb_eda_nli_engine;
+
+    localparam CLK_PERIOD = 10;
+    localparam PIPELINE_LATENCY = 4;
+    localparam N_ROUNDS = 10;
+    localparam N_WARMUP = 20;
+
+    reg         clk, rst_n;
+    reg         i_valid;
+    reg  [15:0] i_data;
+    wire        o_valid;
+    wire [15:0] o_data;
+    reg         cfg_we;
+    reg  [0:0]  cfg_sel;
+    reg  [8:0]  cfg_addr;
+    reg  [15:0] cfg_wdata;
+
+    eda_nli_engine_4s u_dut (
+        .clk(clk), .rst_n(rst_n),
+        .i_valid(i_valid), .i_data(i_data),
+        .o_valid(o_valid), .o_data(o_data),
+        .cfg_we(cfg_we), .cfg_sel(cfg_sel),
+        .cfg_addr(cfg_addr), .cfg_wdata(cfg_wdata)
+    );
+
+    initial clk = 0;
+    always #(CLK_PERIOD/2) clk = ~clk;
+
+    reg [15:0] cfg_mem  [0:63];
+    reg [15:0] lut_mem  [0:511];
+    localparam MAX_TESTS = 1024;
+    reg [15:0] test_input [0:MAX_TESTS-1];
+    integer    num_tests, i, round;
+
+    initial begin
+        rst_n = 0; i_valid = 0; i_data = 0;
+        cfg_we = 0; cfg_sel = 0; cfg_addr = 0; cfg_wdata = 0;
+
+        $readmemh("config_rom.mem", cfg_mem);
+        $readmemh("func_lut.mem", lut_mem);
+        begin
+            reg [31:0] tv_mem [0:MAX_TESTS*2-1];
+            $readmemh("test_vectors.mem", tv_mem);
+            num_tests = 0;
+            for (i = 0; i < MAX_TESTS; i = i + 1)
+                if (tv_mem[i*2] !== 32'hxxxxxxxx) begin
+                    test_input[i] = tv_mem[i*2][15:0];
+                    num_tests = num_tests + 1;
+                end
+        end
+
+        // === Reset ===
+        repeat(5) @(posedge clk); rst_n = 1; repeat(2) @(posedge clk);
+
+        // === Load func_lut FIRST (so LUT reads return known values during config_rom load) ===
+        for (i = 0; i < 256; i = i + 1) begin
+            @(negedge clk); cfg_we = 1; cfg_sel = 1; cfg_addr = i[8:0]; cfg_wdata = lut_mem[i];
+        end
+        @(negedge clk); cfg_we = 0; cfg_addr = 0; cfg_wdata = 0;
+
+        // === Then load config_rom (data path reads func_lut → known values, no X) ===
+        for (i = 0; i < 64; i = i + 1) begin
+            @(negedge clk); cfg_we = 1; cfg_sel = 0; cfg_addr = i[8:0]; cfg_wdata = cfg_mem[i];
+        end
+        @(negedge clk); cfg_we = 0; cfg_sel = 0; cfg_addr = 0; cfg_wdata = 0;
+        repeat(5) @(posedge clk);
+
+        // === Warmup: flush any remaining X through pipeline ===
+        for (i = 0; i < N_WARMUP; i = i + 1) begin
+            @(negedge clk); i_valid = 1; i_data = test_input[i % num_tests];
+        end
+        @(negedge clk); i_valid = 0;
+        repeat(PIPELINE_LATENCY + 2) @(posedge clk);
+
+        $display("WARMUP_DONE %0t", $time);
+
+        // === Data phase: N_ROUNDS x test vectors ===
+        for (round = 0; round < N_ROUNDS; round = round + 1) begin
+            for (i = 0; i < num_tests; i = i + 1) begin
+                @(negedge clk); i_valid = 1; i_data = test_input[i];
+            end
+        end
+        @(negedge clk); i_valid = 0;
+        repeat(PIPELINE_LATENCY + 10) @(posedge clk);
+        $display("EDA SAIF: %0d vec x %0d rounds, warmup=%0d", num_tests, N_ROUNDS, N_WARMUP);
+        $finish;
+    end
+    initial begin #(CLK_PERIOD * (MAX_TESTS * N_ROUNDS + 3000)); $finish; end
+endmodule

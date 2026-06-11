@@ -10,7 +10,8 @@ import sys, os, struct
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'sw'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from nli_eda import optimize_eda, get_function, get_domain, get_fp16_exponent_bins
 
 T_BITS = 10  # adaptive: left-justified to 10 bits (matches RTL T_BITS=10)
@@ -364,7 +365,7 @@ def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print(f"Generating EDA-NLI memory files for: {func_name}")
-    config = optimize_eda(func_name, max_lut=max_lut, max_k=max_k,
+    config = optimize_eda(func_name, max_lut=max_lut, max_k=max_k, hw_order=True,
                           device=device, verbose=True)
     domain = get_domain(func_name)
 

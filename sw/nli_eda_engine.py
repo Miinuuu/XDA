@@ -1,3 +1,4 @@
+
 """
 EDA-NLI Engine: Forward Pass with Exponent-Direct Addressing
 =============================================================
@@ -48,11 +49,25 @@ def _eda_forward_chunk(x_flat: torch.Tensor, config: EDAConfig,
     """Core EDA computation on a flat 1-D chunk (bounded memory)."""
     bin_starts = config.bin_starts.float()
     n_bins = len(bin_starts)
-
-    bin_idx = torch.bucketize(x_flat, bin_starts, right=False) - 1
-    bin_idx = bin_idx.clamp(0, n_bins - 1)
-
     bin_ends = config.bin_ends.float()
+
+    # RTL-faithful bin assignment: extract {sign, exp} from FP16 bit field
+    se_to_idx = {}
+    for i, b in enumerate(config.bins):
+        se_to_idx[(int(b[2]), int(b[3]))] = i
+
+    x_fp16_bits = x_flat.half().view(torch.int16)
+    signs = ((x_fp16_bits >> 15) & 1).int()
+    exps = ((x_fp16_bits >> 10) & 0x1F).int()
+
+    # Default: last bin for positive, first bin for negative (domain clamp)
+    bin_idx = torch.where(signs == 0,
+                          torch.full_like(signs, n_bins - 1),
+                          torch.zeros_like(signs))
+    for (s, e), idx in se_to_idx.items():
+        mask = (signs == s) & (exps == e)
+        bin_idx[mask] = idx
+
     too_low = x_flat < bin_starts[0]
     too_high = x_flat > bin_ends[-1]
 

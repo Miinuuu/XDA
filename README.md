@@ -41,7 +41,10 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 │   ├── nli_eda.py               # XDA core: knapsack DP optimization & evaluation
 │   ├── nli_eda_engine.py        # PyTorch forward-pass simulator (3/4-stage)
 │   ├── ablation_sweep.py        # Ablation study (budget, bit-width, strategy)
-│   └── run_all_experiments.py   # Run all paper experiments
+│   ├── nli_dp.py                # NLI baseline: paper-provided cutpoints (PAPER_CUTPOINTS)
+│   ├── nli_engine.py            # NLI baseline: LUT build + FP16/FP32 forward variants
+│   ├── run_all_experiments.py   # Regenerates paper Table 3 (Parts A and B)
+│   └── eda_results/             # Bundled inputs: optimal_domains.json, activation stats
 │
 ├── gen/                         # Memory file generators
 │   ├── gen_eda_mem.py           # Base .mem generator with bit-exact simulation
@@ -51,6 +54,9 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 └── hw/                          # Hardware RTL
     ├── fpu/
     │   └── fp_adder.v           # Parameterized FP16/FP32 adder
+    ├── table1/                  # Reproduces paper Table 1 (see hw/table1/README.md)
+    │   ├── fpga/                # DSP-free SAIF flow: XDA + NLI + NN-LUT RTL, Makefile, testbenches
+    │   └── asic/                # OpenROAD/Nangate45 configs, fakeram macros, power estimate
     └── eda_u200/eda-nli-kernel/
         ├── src/IP/              # Kernel RTL (wrappers)
         ├── src/nli_engine/      # Standalone engine RTL + testbench
@@ -59,6 +65,24 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
         ├── config/              # LUT config & test vectors (.mem)
         └── Makefile
 ```
+
+## Reproducing Paper Tables 1 and 3
+
+**Table 3 (approximation accuracy, Parts A/B)** — single driver, clean checkout:
+
+```bash
+cd sw && python3 run_all_experiments.py
+# -> sw/eda_results/all_experiments.json  (exhaustive Part A + profiled Part B)
+```
+
+This rebuilds every XDA LUT configuration (Knapsack DP included), evaluates the
+exhaustive FP16 grids, and evaluates the NLI baseline from the paper-provided
+cutpoints (`nli_dp.py`). Known benign deviation: the current allocator finds a
+slightly different GELU solution (max error improves vs. the printed 329.6);
+all other cells reproduce the printed values.
+
+**Table 1 (post-PnR hardware)** — complete FPGA and ASIC flows for XDA, NLI,
+and NN-LUT, including DSP-enabled variants: see [`hw/table1/README.md`](hw/table1/README.md).
 
 ## Requirements
 
