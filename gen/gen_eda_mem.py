@@ -386,8 +386,17 @@ def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
             clipped_bins.add((sign, exp_val))
 
     # Build config ROM (64 entries)
-    first_lut_idx = 0
+    # Domain-clamp targets: positive overflow clamps to f(domain_hi) = global
+    # last entry; negative overflow clamps to f(domain_lo), which under the
+    # hw_order layout is the LAST entry of the most-negative bin (negative
+    # bins are stored outward from zero, so global index 0 is near zero).
     last_lut_idx = len(config.lut_values) - 1
+    _neg_bins = [i for i, b in enumerate(config.bins) if b[2] == 1]
+    if _neg_bins:
+        _mn = min(_neg_bins, key=lambda i: config.bins[i][0])
+        first_lut_idx = int(config.base_offsets[_mn]) + (1 << int(config.k_alloc[_mn]))
+    else:
+        first_lut_idx = 0
     config_rom_entries = []
 
     with open(os.path.join(output_dir, 'config_rom.mem'), 'w') as f:
