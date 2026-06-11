@@ -1,14 +1,14 @@
+
 """
-Ablation Sweep for EDA Paper Section 5.5
-=========================================
-Four ablation studies:
-  1. LUT budget scaling (W ∈ {62, 126, 254, 510})
+Ablation Sweep for EDA-NLI Paper Section 5.5
+=============================================
+Three ablation studies:
+  1. LUT budget scaling (W ∈ {64, 128, 256, 512})
   2. Interpolation bit-width (T ∈ {3..8})
-  3. Allocation strategy comparison (Uniform / Curvature / Knapsack)
-  4. max_k × t_bits joint sweep
+  3. Allocation strategy comparison (Uniform / Curvature / Knapsack / NLI)
 
 Outputs:
-  - eda_results/ablation_results.json
+  - results/sw/ablation/ablation_results.json
   - LaTeX tables to stdout
 """
 
@@ -20,13 +20,17 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+SW_ABLATION_RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eda_results')
+def ensure_results_dirs():
+    os.makedirs(SW_ABLATION_RESULTS_DIR, exist_ok=True)
 
+from nli_dp import generate_fp16_grid, PAPER_CUTPOINTS
 from nli_eda import (
     get_function, get_domain, optimize_eda_with_allocation, EDAConfig,
-    _generate_fp16_grid,
 )
+from nli_engine import build_lut, nli_forward
 
-REL_CLAMP = 2 ** (-14)  # TAU: smallest positive normal in FP16
+REL_CLAMP = 2 ** (-14)  # TAU: smallest positive normal in FP16, matching NLI paper
 
 ABLATION_FUNCS = ['silu', 'exp', 'rsqrt', 'sigmoid']
 ALL_FUNCS = ['silu', 'gelu', 'exp', 'sigmoid', 'tanh',
@@ -52,7 +56,7 @@ EVAL_DOMAINS = {
 def eval_on_fp16_grid(func_name, forward_fn, device='cuda'):
     """Evaluate on exhaustive FP16 grid over full representable range."""
     domain = EVAL_DOMAINS.get(func_name, (-65504.0, 65504.0))
-    grid = _generate_fp16_grid(domain, device)
+    grid = generate_fp16_grid(domain).to(device)
     func = get_function(func_name)
     y_ref = func(grid.float())
     y_approx = forward_fn(grid)
@@ -85,13 +89,29 @@ def eda_forward_with_config(x_input, config, t_bits=None):
 
     bin_starts = config.bin_starts.float().to(device)
     n_bins = len(bin_starts)
-
-    bin_idx = torch.bucketize(x_flat, bin_starts, right=False) - 1
-    bin_idx = bin_idx.clamp(0, n_bins - 1)
-
     bin_ends = config.bin_ends.float().to(device)
-    too_low = x_flat < bin_starts[0]
-    too_high = x_flat > bin_ends[-1]
+
+    # Domain clamp on the input (edges are FP16-exact powers of two), so
+    # out-of-domain inputs evaluate to the corresponding edge value.
+    x_flat = x_flat.clamp(bin_starts.min().item(), bin_ends.max().item())
+
+    # RTL-faithful bin assignment: extract {sign, exp} from FP16 bit field
+    # Build sign_exp → bin_idx lookup from config.bins
+    se_to_idx = {}
+    for i, b in enumerate(config.bins):
+        se_to_idx[(int(b[2]), int(b[3]))] = i
+
+    x_fp16_bits = x_flat.half().view(torch.int16)
+    signs = ((x_fp16_bits >> 15) & 1).int()
+    exps = ((x_fp16_bits >> 10) & 0x1F).int()
+
+    # Default: last bin for positive, first bin for negative (domain clamp)
+    bin_idx = torch.where(signs == 0,
+                          torch.full_like(signs, n_bins - 1),
+                          torch.zeros_like(signs))
+    for (s, e), idx in se_to_idx.items():
+        mask = (signs == s) & (exps == e)
+        bin_idx[mask] = idx
 
     b_start = bin_starts[bin_idx]
     b_end = bin_ends[bin_idx]
@@ -134,9 +154,6 @@ def eda_forward_with_config(x_input, config, t_bits=None):
     product = (t.half() * diff).half()
     y = (y0 + product).half().float()
 
-    y = torch.where(too_low, lut_fp16[0].float(), y)
-    y = torch.where(too_high, lut_fp16[-1].float(), y)
-
     return y.reshape(original_shape).to(x_dtype)
 
 
@@ -150,6 +167,7 @@ def run_ablation_budget(device='cuda', t_bits='adaptive'):
     print("=" * 70)
 
     budgets = [62, 126, 254, 510]
+    nli_Dn = {62: 8, 126: 16, 254: 32, 510: 64}
     results = {}
 
     for fname in ABLATION_FUNCS:
@@ -169,9 +187,34 @@ def run_ablation_budget(device='cuda', t_bits='adaptive'):
             res_uni = eval_on_fp16_grid(
                 fname, lambda x, c=cfg_uni, tb=t_bits: eda_forward_with_config(x, c, t_bits=tb), device)
 
+            # NLI
+            D_n = nli_Dn[W]
+            func = get_function(fname)
+            cuts = torch.tensor(PAPER_CUTPOINTS[fname], dtype=torch.float32)
+            p, m, l = build_lut(func, cuts, D_n)
+            p, m, l = p.to(device), m.to(device), l.to(device)
+            res_nli = eval_on_fp16_grid(
+                fname,
+                lambda x, pp=p, mm=m, ll=l, dn=D_n: nli_forward(x, pp, mm, ll, dn, variant='fp16_hw'),
+                device)
+            res_nli_addr = eval_on_fp16_grid(
+                fname,
+                lambda x, pp=p, mm=m, ll=l, dn=D_n: nli_forward(x, pp, mm, ll, dn, variant='addr_fp32'),
+                device)
+            res_nli_full = eval_on_fp16_grid(
+                fname,
+                lambda x, pp=p, mm=m, ll=l, dn=D_n: nli_forward(x, pp, mm, ll, dn, variant='full_fp32'),
+                device)
+            res_nli['entries'] = len(l)
+            res_nli_addr['entries'] = len(l)
+            res_nli_full['entries'] = len(l)
+
             results[fname][W] = {
                 'knapsack': res_ks,
                 'uniform': res_uni,
+                'nli': res_nli,
+                'nli_addr_fp32': res_nli_addr,
+                'nli_full_fp32': res_nli_full,
             }
             print(" done")
 
@@ -235,6 +278,19 @@ def run_ablation_alloc(device='cuda', t_bits='adaptive'):
                 fname, lambda x, c=cfg, tb=t_bits: eda_forward_with_config(x, c, t_bits=tb), device)
             results[fname][strat] = res
             print(" done")
+
+        # NLI baseline
+        print(f"  {fname} nli...", end='', flush=True)
+        func = get_function(fname)
+        cuts = torch.tensor(PAPER_CUTPOINTS[fname], dtype=torch.float32)
+        p, m, l = build_lut(func, cuts, 32)
+        p, m, l = p.to(device), m.to(device), l.to(device)
+        res_nli = eval_on_fp16_grid(
+            fname,
+            lambda x, pp=p, mm=m, ll=l: nli_forward(x, pp, mm, ll, 32, variant='fp16_hw'),
+            device)
+        results[fname]['nli'] = res_nli
+        print(" done")
 
     return results
 
@@ -303,11 +359,18 @@ def latex_table_budget(results):
     """LaTeX for Ablation 1: LUT budget scaling."""
     print("\n% === Ablation 1: LUT Budget ===")
     budgets = [62, 126, 254, 510]
-    methods = [('Knapsack', 'knapsack'), ('Uniform', 'uniform')]
+    methods = [
+        ('Knapsack', 'knapsack'),
+        ('Uniform', 'uniform'),
+        ('NLI', 'nli'),
+        ('NLI-addr-FP32', 'nli_addr_fp32'),
+    ]
 
     print(r"\begin{table}[t]")
     print(r"\caption{Mean relative error ($\times 10^{-4}$) vs.\ LUT micro-bin "
-          r"budget $W$. Lower is better. \textbf{Bold}: best per $(f, W)$ cell.}")
+          r"budget $W$. Lower is better. \textbf{Bold}: best per $(f, W)$ cell. "
+          r"NLI uses $D_n \in \{8, 16, 32, 64\}$ to match budget; "
+          r"NLI-addr-FP32 keeps the LUT/interpolation path in FP16 while widening the address path.}")
     print(r"\label{tab:abl-budget}")
     print(r"\centering\small")
     print(r"\begin{tabular}{ll" + "r" * len(budgets) + "}")
@@ -320,7 +383,7 @@ def latex_table_budget(results):
         if fi > 0:
             print(r"\midrule")
         for mi, (mlabel, mkey) in enumerate(methods):
-            prefix = (f"\\multirow{{2}}{{*}}{{{fname.capitalize()}}}"
+            prefix = (f"\\multirow{{4}}{{*}}{{{fname.capitalize()}}}"
                       if mi == 0 else "")
             vals = []
             for W in budgets:
@@ -373,7 +436,7 @@ def latex_table_alloc(results):
     """LaTeX for Ablation 3: allocation strategy."""
     print("\n% === Ablation 3: Allocation Strategy ===")
     strategies = [('Uniform', 'uniform'), ('Curvature', 'curvature'),
-                  ('Knapsack', 'knapsack')]
+                  ('Knapsack', 'knapsack'), ('NLI', 'nli')]
 
     print(r"\begin{table}[t]")
     print(r"\caption{Mean relative error ($\times 10^{-4}$) by allocation "
@@ -432,7 +495,8 @@ def main():
         'ablation_alloc': r3,
         'ablation_k_t': r4,
     }
-    out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eda_results')
+    ensure_results_dirs()
+    out_dir = SW_ABLATION_RESULTS_DIR
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, 'ablation_results.json')
 

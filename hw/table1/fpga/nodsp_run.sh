@@ -1,0 +1,35 @@
+#!/bin/bash
+# DSP-FREE rerun under the same Vivado version (2024.2) as the DSP-enabled runs,
+# so the rebuttal's DSP-on/off comparison is single-tool-version end to end.
+set -e
+# Prerequisite: source <Vivado>/settings64.sh first
+command -v vivado >/dev/null || { echo "ERROR: vivado not in PATH"; exit 1; }
+RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
+SRC=$RUN_DIR/src
+OUT=$RUN_DIR/out
+mkdir -p "$OUT"
+run_design() {
+    local NAME=$1 TOP=$2 RTL=$3
+    local D=$OUT/$NAME
+    mkdir -p "$D"
+    cat > "$D/synth.tcl" << TCLEOF
+create_project -force -part xcu200-fsgd2104-2-e proj $D/proj
+add_files {$RTL}
+add_files -fileset constrs_1 $SRC/clock.xdc
+set_property top $TOP [current_fileset]
+synth_design -top $TOP -flatten_hierarchy rebuilt -max_dsp 0
+opt_design
+place_design
+route_design
+report_utilization -file $D/util.rpt
+report_timing_summary -max_paths 1 -file $D/timing.rpt
+close_project
+TCLEOF
+    echo "[$(date +%H:%M:%S)] start $NAME"
+    vivado -mode batch -source "$D/synth.tcl" -log "$D/vivado.log" -journal "$D/vivado.jou" > /dev/null 2>&1
+    echo "[$(date +%H:%M:%S)] done  $NAME"
+}
+run_design eda_nodsp     eda_nli_engine_4s "$SRC/eda_nli_engine_4s.v $SRC/fp_adder.v"
+run_design nli_nodsp     nli_engine        "$SRC/nli_engine.v $SRC/fp_mult_norm.v $SRC/fp_adder.v"
+run_design nnlut16_nodsp nn_lut_engine     "$SRC/nn_lut_engine.v $SRC/fp_mult_norm.v $SRC/fp_adder.v"
+echo ALL_DONE_NODSP

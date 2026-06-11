@@ -10,7 +10,7 @@ import sys, os, struct
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'sw'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'sw'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from nli_eda import optimize_eda, get_function, get_domain, get_fp16_exponent_bins
 
