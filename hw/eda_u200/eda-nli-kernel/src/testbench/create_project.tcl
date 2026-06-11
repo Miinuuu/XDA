@@ -13,7 +13,7 @@ set cfg_dir [file normalize "./config"]
 create_project -force $proj_name $proj_dir -part xcu200-fsgd2104-2-e
 
 # Add RTL sources
-add_files -norecurse [glob $src_dir/*.v $src_dir/*.sv $src_dir/*.vp]
+add_files -norecurse [glob $src_dir/*.v $src_dir/*.sv]
 update_compile_order -fileset sources_1
 
 # ==============================================================
