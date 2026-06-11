@@ -4,6 +4,8 @@
 import sys, os, argparse
 import numpy as np
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'sw'))
+
 from nn_lut_engine import _optimize_breakpoints
 from nli_dp import get_function, get_domain, generate_fp16_grid
 from HW.fp16_hw_emu import fp16_bits, bits_to_fp16, fp16_ge, fp_adder, fp_mult_norm

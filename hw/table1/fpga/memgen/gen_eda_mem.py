@@ -461,14 +461,22 @@ def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
     test_t = torch.tensor(test_inputs_f32)
     y_ref = func(test_t)
     y_hw_all = []
+    in_clamp = []
     for x in test_inputs_f32:
         xb = fp32_to_fp16_bits(x)
         yh = hw_eda_forward_scalar(xb, config_rom_entries, lut_vals)
         y_hw_all.append(yh if not np.isnan(yh) else 0.0)
+        in_clamp.append(bool((config_rom_entries[(xb >> 10) & 0x3F] >> 12) & 1))
     y_hw_t = torch.tensor(y_hw_all)
     abs_err = torch.abs(y_hw_t - y_ref)
+    clamp_mask = torch.tensor(in_clamp)
+    interp_err = abs_err[~clamp_mask]
     print(f"\n  HW EDA vs reference: max_abs={abs_err.max().item():.4e} "
           f"mean_abs={abs_err.mean().item():.4e}")
+    print(f"  (interpolated bins only: max_abs="
+          f"{interp_err.max().item() if interp_err.numel() else 0.0:.4e}; "
+          f"{int(clamp_mask.sum())}/{len(test_inputs_f32)} test points fall in "
+          f"edge-clamped bins, which return the LUT anchor value by design)")
 
 
 if __name__ == '__main__':

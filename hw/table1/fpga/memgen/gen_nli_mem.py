@@ -5,6 +5,8 @@ import sys, os
 import numpy as np
 import torch
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'sw'))
+
 from nli_engine import build_lut_from_paper
 from nli_dp import get_function, get_domain
 from HW.fp16_hw_emu import fp16_bits, bits_to_fp16, fp16_ge, fp_adder, fp_mult_norm
