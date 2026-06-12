@@ -1,0 +1,102 @@
+Skipping import of cpp extensions due to incompatible torch version. Please upgrade to torch >= 2.11.0 (found 2.10.0+cu128).
+Using the latest cached version of the dataset since wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-2-raw-v1' at <HF_CACHE>/datasets/wikitext/wikitext-2-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Apr  2 19:26:23 2026).
+Subnormal Hit-Rate Analysis for rsqrt Inputs
+================================================================================
+FP16 subnormal threshold: |x| < 2^-14 = 6.10e-05
+RMSNorm rsqrt input = mean(x²) + eps
+
+
+================================================================================
+  Qwen2.5-0.5B-Instruct  (eps=1e-06)
+================================================================================
+
+         Layer |     Values |  Subnormal |         Rate |      Min val
+  -------------+------------+------------+--------------+-------------
+       L0_post |      9,688 |          0 |            0 |   1.6149e-04
+        L0_pre |      9,688 |          0 |            0 |   1.2181e-04
+      L10_post |      9,688 |          0 |            0 |   1.4874e-01
+       L10_pre |      9,688 |          0 |            0 |   1.3257e-01
+           ...
+       L8_post |      9,688 |          0 |            0 |   1.5562e-01
+        L8_pre |      9,688 |          0 |            0 |   1.3462e-01
+       L9_post |      9,688 |          0 |            0 |   1.4962e-01
+        L9_pre |      9,688 |          0 |            0 |   1.3287e-01
+
+  TOTAL: 465,024 values, 0 subnormal (0.00e+00 = 0.000000%)
+  eps (1e-06) >> subnormal threshold (6.10e-05): NO
+
+================================================================================
+  Llama-3.2-3B-Instruct  (eps=1e-05)
+================================================================================
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:09<00:09,  9.04s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:11<00:00,  5.30s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:11<00:00,  5.86s/it]
+Using the latest cached version of the dataset since wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-2-raw-v1' at <HF_CACHE>/datasets/wikitext/wikitext-2-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Apr  2 19:26:23 2026).
+
+         Layer |     Values |  Subnormal |         Rate |      Min val
+  -------------+------------+------------+--------------+-------------
+       L0_post |      9,477 |          0 |            0 |   2.5230e-04
+        L0_pre |      9,477 |          0 |            0 |   2.2395e-04
+      L10_post |      9,477 |          0 |            0 |   1.4976e-02
+       L10_pre |      9,477 |          0 |            0 |   1.3451e-02
+           ...
+       L8_post |      9,477 |          0 |            0 |   1.0827e-02
+        L8_pre |      9,477 |          0 |            0 |   9.5284e-03
+       L9_post |      9,477 |          0 |            0 |   1.1412e-02
+        L9_pre |      9,477 |          0 |            0 |   1.0982e-02
+
+  TOTAL: 530,712 values, 0 subnormal (0.00e+00 = 0.000000%)
+  eps (1e-05) >> subnormal threshold (6.10e-05): NO
+
+================================================================================
+  Llama-3.1-8B-Instruct  (eps=1e-05)
+================================================================================
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:09<00:27,  9.12s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:18<00:18,  9.14s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:27<00:09,  9.10s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:29<00:00,  6.35s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:29<00:00,  7.36s/it]
+Using the latest cached version of the dataset since wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-2-raw-v1' at <HF_CACHE>/datasets/wikitext/wikitext-2-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Apr  2 19:26:23 2026).
+
+         Layer |     Values |  Subnormal |         Rate |      Min val
+  -------------+------------+------------+--------------+-------------
+       L0_post |      9,477 |          0 |            0 |   6.5981e-05
+        L0_pre |      9,477 |      3,472 |     3.66e-01 |   3.8238e-05
+      L10_post |      9,477 |          0 |            0 |   6.7637e-03
+       L10_pre |      9,477 |          0 |            0 |   5.3246e-03
+           ...
+       L8_post |      9,477 |          0 |            0 |   4.9640e-03
+        L8_pre |      9,477 |          0 |            0 |   3.9068e-03
+       L9_post |      9,477 |          0 |            0 |   5.8906e-03
+        L9_pre |      9,477 |          0 |            0 |   4.4642e-03
+
+  TOTAL: 606,528 values, 3,472 subnormal (5.72e-03 = 0.572439%)
+  eps (1e-05) >> subnormal threshold (6.10e-05): NO
+
+================================================================================
+  Qwen2.5-7B-Instruct  (eps=1e-06)
+================================================================================
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:07<00:21,  7.22s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:14<00:14,  7.13s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:21<00:07,  7.13s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:27<00:00,  6.89s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:27<00:00,  6.98s/it]
+Using the latest cached version of the dataset since wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-2-raw-v1' at <HF_CACHE>/datasets/wikitext/wikitext-2-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Apr  2 19:26:23 2026).
+<RUN_DIR>/subnormal_hitrate.py:86: RuntimeWarning: overflow encountered in cast
+  fp16_vals = all_vals.astype(np.float16)
+
+         Layer |     Values |  Subnormal |         Rate |      Min val
+  -------------+------------+------------+--------------+-------------
+       L0_post |      9,688 |          0 |            0 |   8.9954e-03
+        L0_pre |      9,688 |          0 |            0 |   9.4652e-05
+      L10_post |      9,688 |          0 |            0 |   5.0173e-01
+       L10_pre |      9,688 |          0 |            0 |   4.3991e-01
+           ...
+       L8_post |      9,688 |          0 |            0 |   3.3716e-01
+        L8_pre |      9,688 |          0 |            0 |   2.8738e-01
+       L9_post |      9,688 |          0 |            0 |   3.4118e-01
+        L9_pre |      9,688 |          0 |            0 |   2.3293e-01
+
+  TOTAL: 542,528 values, 0 subnormal (0.00e+00 = 0.000000%)
+  eps (1e-06) >> subnormal threshold (6.10e-05): NO
+
+================================================================================
+Conclusion: both deployed eps values (1e-5, 1e-6) are below the
+FP16 subnormal threshold (2^-14 = 6.1e-5), so a subnormal rsqrt
+input requires variance+eps itself to round below 2^-14, i.e. a
+near-zero hidden-state variance. The profiling above shows how
+rarely this occurs and where (per layer, per model).

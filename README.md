@@ -45,6 +45,9 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 │   ├── nli_dp.py                # NLI baseline: paper-provided cutpoints (PAPER_CUTPOINTS)
 │   ├── nli_engine.py            # NLI baseline: LUT build + FP16/FP32 forward variants
 │   ├── run_all_experiments.py   # Regenerates paper Table 3 (Parts A and B)
+│   ├── llm_eval.py              # LLM quality eval (paper Table 2): patched models + lm-eval + PPL
+│   ├── flex_sfu_engine.py       # Flex-SFU reference: SGD-optimized PWL baseline
+│   ├── subnormal_hitrate.py     # rsqrt-input subnormal profiling (paper Sec. 4.4)
 │   └── eda_results/             # Bundled inputs: optimal_domains.json, activation stats
 │
 ├── gen/                         # Memory file generators
@@ -67,7 +70,7 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
         └── Makefile
 ```
 
-## Reproducing Paper Tables 1 and 3
+## Reproducing Paper Tables 1, 2, and 3
 
 **Table 3 (approximation accuracy, Parts A/B)** — single driver, clean checkout:
 
@@ -89,12 +92,38 @@ heavy-tailed draws — the widest one (Llama RMSNorm NLI max, printed 84.4) has
 a measured rerun spread of 101 ± 8, so expect values near 100 there. No
 comparison is affected in either direction.
 
+**Table 2 (LLM quality, five models)** — one run per model × method:
+
+```bash
+cd sw
+for M in Qwen/Qwen2.5-0.5B-Instruct meta-llama/Llama-3.2-3B-Instruct \
+         Qwen/Qwen2.5-7B-Instruct meta-llama/Llama-3.1-8B-Instruct Qwen/Qwen3-30B-A3B; do
+  for V in baseline nli_eda nli nn_lut nn_lut_256; do
+    python3 llm_eval.py --model "$M" --mode "$V"
+  done
+done
+# -> sw/llm_results/table1_<model>_<mode>.json
+```
+
+`nli_eda` is XDA's internal name. Each run replaces SiLU, Softmax
+(exp + reciprocal), and RMSNorm (rsqrt) via PyTorch hooks and evaluates
+MMLU (5-shot), HumanEval, eight zero-shot tasks, and Wikitext-2 perplexity.
+The canonical outputs behind the printed Table 2 ship under
+`rebuttal_evidence/llm_task_eval/results/`, and
+`rebuttal_evidence/llm_task_eval/derive_task_mad.py` re-derives the paper's
+0.30/0.36 pp task-level deviations from them alone. `sw/subnormal_hitrate.py`
+reproduces the Sec. 4.4 rsqrt-input subnormal profiling (four models, 100
+Wikitext-2 samples); a rerun log ships in the same directory. The meta-llama
+checkpoints are gated on Hugging Face (set `HF_TOKEN`).
+
 **Table 1 (post-PnR hardware)** — complete FPGA and ASIC flows for XDA, NLI,
 and NN-LUT, including DSP-enabled variants: see [`hw/table1/README.md`](hw/table1/README.md).
 
 ## Requirements
 
-- **SW**: Python 3, PyTorch, NumPy
+- **SW**: Python 3, PyTorch, NumPy; Table 2 additionally needs
+  `transformers`, `datasets`, and `lm-eval` (EleutherAI harness), plus GPU(s)
+  with enough memory for the largest models (Llama-3.1-8B, Qwen3-30B-A3B)
 - **RTL Simulation**: Vivado (xvlog/xelab/xsim)
 - **FPGA Build & Run**: Vitis 2021.1+, Xilinx U200 platform (`xilinx_u200_gen3x16_xdma_2_202110_1`)
 

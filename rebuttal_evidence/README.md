@@ -14,6 +14,7 @@ internal name in this artifact).
 | §3 BF16/FP8 generalization (A-Q1) | `bf16/exp_bf16_preliminary.py`, `bf16/bf16_preliminary_out.log` | W=512 covers all 9 functions; nonzero K on 19–34 octaves for the activation/exp-family functions (the 34 maximum is exp); rsqrt 36/36 and reciprocal 32/32 octaves |
 | §4 DSP-enabled FPGA synthesis (B-Q1 = D-Q3; D-W6) | `fpga_dsp_enabled/{design}_{dsp,nodsp}_{util,timing}.rpt` | CLB LUTs 881 (XDA) / 1,829 (NLI) / 801 (NN-LUT16); FFs 136/287/306; DSPs 1/2/1; Fmax = 1/(2.0 ns − WNS) → 156.6/102.7/109.3 MHz; nodsp reruns reproduce Table 1 within ±2 LUTs |
 | §6 rsqrt distribution-free ε-bound (B-Q4 = D-Q4; D-W1) | `rsqrt_eps_sweep/rsqrt_eps_sweep.py`, `rsqrt_eps_sweep/rsqrt_eps_sweep_results.json` | exhaustive max relative error over every FP16 value ≥ ε: XDA 50.0 vs. NLI 7,002 (×10⁻⁴) at ε = 10⁻⁵ (140×); 1,180 vs. 9,046 at 10⁻⁶ |
+| §6(iii)(iv) task-level impact (D-Q4) | `llm_task_eval/results/table1_*.json` (25 = 5 models × {baseline, XDA, NLI, NN-LUT16, NN-LUT256}), `llm_task_eval/derive_task_mad.py`, `llm_task_eval/subnormal_profile.log` | XDA 0.30 pp / NLI 0.36 pp mean absolute deviation vs. the FP16 baseline over the 40 zero-shot task–model pairs; largest XDA deviation 1.66 pp (WinoGrande, Qwen2.5-7B); rsqrt-input subnormal profiling: 3,472 of 2.1M values (0.16%), first layer of Llama-3.1-8B only, zero in the other three models |
 | §7 NN-LUT256 row (D-W4) | `nnlut256/fpga_nnlut256_{util,timing,power}.rpt`, `nnlut256/asic_nnlut256_sram_6_report.json` | FPGA 6,814 CLB LUTs / 4,130 FFs / 96.2 MHz (= 1/(2.0 ns − WNS), WNS = −8.397 ns in `fpga_nnlut256_timing.rpt`) / 99 mW dynamic; ASIC total area 62,116 µm² |
 
 Notes:
@@ -34,6 +35,16 @@ Notes:
   documented in the script header).
 - The BF16 log's W=512 block is the source of the rebuttal's 19–34 / 36/36 / 32/32
   octave counts (one row per function).
+- The §6(iii)(iv) task-level numbers are the paper's printed values (abstract,
+  Sec. 4.4) that the rebuttal cites; they are included here for direct inspection.
+  The JSONs under `llm_task_eval/results/` are the canonical lm-eval outputs the
+  printed Table 2 was generated from (regeneration flow: `sw/llm_eval.py`, see the
+  top-level README); `derive_task_mad.py` recomputes 0.30/0.36/1.66 pp from the
+  shipped JSONs alone, and the NN-LUT256 rows also back §7's "comparable LLM
+  quality" reference. `subnormal_profile.log` is a rerun of `sw/subnormal_hitrate.py`
+  as shipped; the subnormal count reproduces the paper's Sec. 4.4 value exactly
+  (3,472, all in Llama-3.1-8B's first pre-attention RMSNorm; per-model totals sum
+  to 2,144,792 ≈ 2.1M values).
 - The rebuttal's LUT-as-distributed-RAM comparison (XDA 176 vs. NLI 210) uses Vivado's
   "LUT as Distributed RAM" subcategory; the parent "LUT as Memory" row additionally
   includes shift-register LUTs (XDA 178 = 176 + 2 SRL; NLI 210 = 210 + 0 — see

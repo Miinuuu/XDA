@@ -1,0 +1,23 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "mode": "nli",
+  "table1": {
+    "nli": {
+      "mmlu": 66.88505910838913,
+      "gsm8k": null,
+      "humaneval": 59.756097560975604,
+      "zeroshot_avg": 71.39585071205569,
+      "wikitext2_ppl": 6.565424919128418,
+      "zeroshot_detail": {
+        "arc_challenge": 55.20477815699659,
+        "arc_easy": 79.503367003367,
+        "boolq": 84.83180428134557,
+        "piqa": 81.17519042437432,
+        "hellaswag": 79.6355307707628,
+        "openbookqa": 44.2,
+        "lambada_openai": 72.34620609353775,
+        "winogrande": 74.26992896606156
+      }
+    }
+  }
+}
