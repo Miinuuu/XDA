@@ -17,13 +17,18 @@ internal name in this artifact).
 | §7 NN-LUT256 row (D-W4) | `nnlut256/fpga_nnlut256_{util,timing,power}.rpt`, `nnlut256/asic_nnlut256_sram_6_report.json` | FPGA 6,814 CLB LUTs / 4,130 FFs / 76.0 MHz / 99 mW dynamic; ASIC total area 62,116 µm² |
 
 Notes:
-- `asic_power/report_power_v2.tcl` reads the post-route `6_final.odb`/`6_final.spef`
-  produced by the ASIC flow under `hw/table1/asic/` (export `ORFS_ROOT` to your
-  OpenROAD-flow-scripts checkout). Running it with `PWR_DESIGN=<design>
-  PWR_MODE=uniform` reproduces the shipped `pwr_*_uniform.log`; the exact command
-  line is documented in `POWER_SUMMARY.md`. `PWR_MODE=annotated` is the
-  input-propagation variant that `POWER_SUMMARY.md` documents as biased across SRAM
-  macro boundaries (kept for transparency, not used for the rebuttal numbers).
+- `asic_power/run_power.sh` regenerates the uniform power logs: it runs
+  `report_power_v2.tcl` with `PWR_MODE=uniform` for the three designs
+  (`nli_engine`, `eda_nli_engine_4s`, `nn_lut_engine_16` — the same directory names
+  as `hw/table1/asic/configs/`), reading each post-route `6_final.odb`/`.spef` from
+  `$ORFS/flow/results/nangate45/<design>/base`. First build the designs with the
+  flow under `hw/table1/asic/`, then `export ORFS=<your OpenROAD-flow-scripts
+  checkout>` and run the script; outputs land as `repro_pwr_*_uniform.log` for
+  diffing against the shipped logs. The `Reproduce` block inside `POWER_SUMMARY.md`
+  records the same loop as originally run in the source tree. `PWR_MODE=annotated`
+  is the input-propagation variant that `POWER_SUMMARY.md` documents as biased
+  across SRAM macro boundaries (kept for transparency, not used for the rebuttal
+  numbers).
 - The rsqrt sweep script regenerates `rsqrt_eps_sweep_results.json` byte-identically
   on GPU; a CPU fallback is included (near-tie cells may differ in the last digit, as
   documented in the script header).
