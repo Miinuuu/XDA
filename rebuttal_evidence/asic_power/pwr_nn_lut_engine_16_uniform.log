@@ -1,0 +1,19 @@
+OpenROAD 26Q1-2656-gaf6324a7d9 
+Features included (+) or not (-): +GPU -GUI -Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[WARNING ORD-2056] The following 2 liberty cell(s) do not have LEF masters and will be marked as dont-use:
+  fakeram45_256x16
+  fakeram45_64x15
+===== POWER REPORT: nn_lut_engine_16  (mode=uniform) =====
+Group                  Internal  Switching    Leakage      Total
+                          Power      Power      Power      Power (Watts)
+----------------------------------------------------------------
+Sequential             4.46e-04   4.54e-05   6.48e-05   5.57e-04  31.5%
+Combinational          3.06e-04   3.86e-04   1.76e-04   8.68e-04  49.1%
+Clock                  1.57e-04   1.81e-04   5.21e-06   3.43e-04  19.4%
+Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Pad                    0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+----------------------------------------------------------------
+Total                  9.09e-04   6.13e-04   2.46e-04   1.77e-03 100.0%
+                          51.4%      34.7%      13.9%
