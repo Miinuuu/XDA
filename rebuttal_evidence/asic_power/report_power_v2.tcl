@@ -7,8 +7,8 @@
 
 set design $::env(PWR_DESIGN)
 set mode $::env(PWR_MODE)
-set base $::env(ORFS_ROOT)/flow/results/nangate45/$design/base
-set libdir $::env(ORFS_ROOT)/flow/platforms/nangate45/lib
+set base $::env(ORFS)/flow/results/nangate45/$design/base
+set libdir $::env(ORFS)/flow/platforms/nangate45/lib
 
 read_liberty $libdir/NangateOpenCellLibrary_typical.lib
 read_liberty $libdir/fakeram45_256x16.lib
