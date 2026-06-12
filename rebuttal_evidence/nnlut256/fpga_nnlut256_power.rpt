@@ -1,0 +1,428 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version     : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
+| Date             : Sat Mar 28 12:21:18 2026
+| Host         : (anonymized)
+| Command          : report_power -file <RUN_DIR>/ing/research/eda/results/hw/table1/fpga/../../tmp/saif_results/nnlut256/power.rpt -advisory
+| Design           : nn_lut_engine
+| Device           : xcu200-fsgd2104-2-e
+| Design State     : routed
+| Grade            : extended
+| Process          : typical
+| Characterization : Production
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Power Report
+
+Table of Contents
+-----------------
+1. Summary
+1.1 On-Chip Components
+1.2 Power Supply Summary
+1.3 Confidence Level
+2. Settings
+2.1 Environment
+2.2 Clock Constraints
+3. Detailed Reports
+3.1 By Hierarchy
+4. Advisory
+
+1. Summary
+----------
+
++--------------------------+-------------------------------------------------------------------------------------------------------+
+| Total On-Chip Power (W)  | 2.569                                                                                                 |
+| Design Power Budget (W)  | Unspecified*                                                                                          |
+| Power Budget Margin (W)  | NA                                                                                                    |
+| Dynamic (W)              | 0.099                                                                                                 |
+| Device Static (W)        | 2.470                                                                                                 |
+| Effective TJA (C/W)      | 0.5                                                                                                   |
+| Max Ambient (C)          | 98.7                                                                                                  |
+| Junction Temperature (C) | 26.3                                                                                                  |
+| Confidence Level         | High                                                                                                  |
+| Setting File             | ---                                                                                                   |
+| Simulation Activity File | <RUN_DIR>/ing/research/eda/results/hw/table1/fpga/../../tmp/saif_results/nnlut256/nnlut256_clean.saif |
+| Design Nets Matched      | 100%   (15897/15958)                                                                                  |
++--------------------------+-------------------------------------------------------------------------------------------------------+
+* Specify Design Power Budget using, set_operating_conditions -design_power_budget <value in Watts>
+
+
+1.1 On-Chip Components
+----------------------
+
++--------------------------+-----------+----------+-----------+-----------------+
+| On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
++--------------------------+-----------+----------+-----------+-----------------+
+| Clocks                   |     0.031 |        3 |       --- |             --- |
+| CLB Logic                |     0.027 |    15698 |       --- |             --- |
+|   LUT as Logic           |     0.025 |     6734 |   1182240 |            0.57 |
+|   CARRY8                 |     0.002 |      527 |    147780 |            0.36 |
+|   LUT as Distributed RAM |    <0.001 |       80 |    591840 |            0.01 |
+|   Register               |    <0.001 |     4130 |   2364480 |            0.17 |
+|   Others                 |     0.000 |        8 |       --- |             --- |
+| Signals                  |     0.019 |     7532 |       --- |             --- |
+| Block RAM                |     0.004 |      0.5 |      2160 |            0.02 |
+| I/O                      |     0.018 |       63 |       676 |            9.32 |
+| Static Power             |     2.470 |          |           |                 |
+| Total                    |     2.569 |          |           |                 |
++--------------------------+-----------+----------+-----------+-----------------+
+
+
+1.2 Power Supply Summary
+------------------------
+
++------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Source     | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
++------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Vccint     |       0.850 |     0.902 |       0.094 |      0.808 |       NA    | Unspecified | NA         |
+| Vccint_io  |       0.850 |     0.263 |       0.001 |      0.262 |       NA    | Unspecified | NA         |
+| Vccbram    |       0.850 |     0.016 |       0.000 |      0.015 |       NA    | Unspecified | NA         |
+| Vccaux     |       1.800 |     0.651 |       0.000 |      0.651 |       NA    | Unspecified | NA         |
+| Vccaux_io  |       1.800 |     0.189 |       0.004 |      0.185 |       NA    | Unspecified | NA         |
+| Vcco33     |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco25     |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco18     |       1.800 |     0.006 |       0.006 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco15     |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco135    |       1.350 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco12     |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco10     |       1.000 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vccadc     |       1.800 |     0.024 |       0.000 |      0.024 |       NA    | Unspecified | NA         |
+| MGTYAVcc   |       0.900 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| MGTYAVtt   |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| MGTYVccaux |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
++------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+
+
+1.3 Confidence Level
+--------------------
+
++-----------------------------+------------+------------------------------------------------+--------+
+| User Input Data             | Confidence | Details                                        | Action |
++-----------------------------+------------+------------------------------------------------+--------+
+| Design implementation state | High       | Design is routed                               |        |
+| Clock nodes activity        | High       | User specified more than 95% of clocks         |        |
+| I/O nodes activity          | High       | User specified more than 95% of inputs         |        |
+| Internal nodes activity     | High       | User specified more than 25% of internal nodes |        |
+| Device models               | High       | Device models are Production                   |        |
+|                             |            |                                                |        |
+| Overall confidence level    | High       |                                                |        |
++-----------------------------+------------+------------------------------------------------+--------+
+
+
+2. Settings
+-----------
+
+2.1 Environment
+---------------
+
++-----------------------+--------------------------+
+| Ambient Temp (C)      | 25.0                     |
+| ThetaJA (C/W)         | 0.5                      |
+| Airflow (LFM)         | 250                      |
+| Heat Sink             | medium (Medium Profile)  |
+| ThetaSA (C/W)         | 0.7                      |
+| Board Selection       | medium (10"x10")         |
+| # of Board Layers     | 12to15 (12 to 15 Layers) |
+| Board Temperature (C) | 25.0                     |
++-----------------------+--------------------------+
+
+
+2.2 Clock Constraints
+---------------------
+
++-------+--------+-----------------+
+| Clock | Domain | Constraint (ns) |
++-------+--------+-----------------+
+| clk   | clk    |             2.0 |
++-------+--------+-----------------+
+
+
+3. Detailed Reports
+-------------------
+
+3.1 By Hierarchy
+----------------
+
++-----------------------+-----------+
+| Name                  | Power (W) |
++-----------------------+-----------+
+| nn_lut_engine         |     0.099 |
+|   i_data_IBUF[0]_inst |     0.001 |
+|   i_data_IBUF[1]_inst |     0.002 |
+|   i_data_IBUF[2]_inst |     0.002 |
+|   i_data_IBUF[8]_inst |     0.002 |
+|   i_data_IBUF[9]_inst |     0.001 |
+|   u_mul               |     0.006 |
++-----------------------+-----------+
+
+
+4. Advisory
+-----------
+
++------------------+--------+--------+-------------+-------------+--------------------+-----------------+-----------------------------------+
+| Confidence Level | Status | Fanout | Signal Type | Polarity    | Static Probability | Toggle Rate (%) | Net                               |
++------------------+--------+--------+-------------+-------------+--------------------+-----------------+-----------------------------------+
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg                    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[100][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[101][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[102][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[103][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[104][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[105][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[106][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[107][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[108][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[109][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[10][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[110][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[111][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[112][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[113][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[114][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[115][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[116][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[117][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[118][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[119][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[11][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[120][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[121][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[122][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[123][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[124][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[125][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[126][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[127][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[128][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[129][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[12][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[130][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[131][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[132][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[133][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[134][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[135][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[136][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[137][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[138][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[139][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[13][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[140][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[141][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[142][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[143][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[144][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[145][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[146][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[147][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[148][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[149][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[14][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[150][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[151][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[152][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[153][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[154][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[155][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[156][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[157][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[158][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[159][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[15][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[160][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[161][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[162][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[163][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[164][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[165][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[166][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[167][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[168][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[169][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[16][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[170][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[171][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[172][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[173][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[174][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[175][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[176][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[177][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[178][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[179][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[17][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[180][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[181][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[182][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[183][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[184][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[185][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[186][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[187][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[188][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[189][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[18][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[190][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[191][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[192][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[193][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[194][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[195][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[196][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[197][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[198][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[199][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[19][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[1][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[200][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[201][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[202][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[203][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[204][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[205][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[206][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[207][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[208][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[209][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[20][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[210][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[211][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[212][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[213][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[214][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[215][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[216][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[217][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[218][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[219][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[21][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[220][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[221][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[222][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[223][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[224][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[225][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[226][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[227][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[228][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[229][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[22][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[230][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[231][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[232][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[233][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[234][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[235][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[236][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[237][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[238][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[239][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[23][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[240][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[241][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[242][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[243][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[244][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[245][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[246][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[247][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[248][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[249][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[24][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[250][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[251][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[252][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[253][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[254][15]_i_1_n_0   |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[25][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[26][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[27][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[28][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[29][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[2][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[30][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[31][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[32][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[33][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[34][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[35][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[36][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[37][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[38][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[39][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[3][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[40][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[41][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[42][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[43][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[44][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[45][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[46][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[47][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[48][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[49][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[4][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[50][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[51][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[52][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[53][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[54][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[55][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[56][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[57][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[58][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[59][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[5][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[60][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[61][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[62][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[63][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[64][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[65][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[66][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[67][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[68][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[69][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[6][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[70][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[71][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[72][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[73][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[74][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[75][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[76][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[77][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[78][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[79][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[7][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[80][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[81][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[82][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[83][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[84][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[85][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[86][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[87][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[88][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[89][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[8][15]_i_1_n_0     |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[90][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[91][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[92][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[93][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[94][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[95][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[96][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[97][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[98][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[99][15]_i_1_n_0    |
+| Low              |        |     16 |             | Active High |               0.00 |             0.0 | breakpoint_reg[9][15]_i_1_n_0     |
+| Low              |        |      2 | BRAM Enable | Active High |               0.09 |             0.0 | intercept_reg_reg_bram_0_i_10_n_0 |
+| Medium           |        |     50 | Clear/      | Both        |               1.00 |             0.0 | rst_n_IBUF_inst/O                 |
+| Medium           |        |      1 | BRAM Enable | Active High |               0.28 |             0.0 | cfg_we_IBUF_inst/O                |
++------------------+--------+--------+-------------+-------------+--------------------+-----------------+-----------------------------------+
+* High:  No action required.  Calculated activity values are consistent with signal type and polarity.
+** Medium:  Switching activity should be reviewed and corrected if necessary.  Calculated activity values may be inconsistent with signal type and polarity which can result in inaccurate power analysis.
+*** Low: Switching activity must be reviewed and corrected to prevent incorrect power analysis. Calculated activity values are inappropriate for the signal type and polarity.
+
+

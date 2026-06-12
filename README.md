@@ -37,6 +37,7 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 
 ```
 ├── run_pipeline.sh              # Full pipeline automation script
+├── rebuttal_evidence/           # Pre-generated outputs backing the rebuttal's new numbers (see its README.md)
 ├── sw/                          # Python software
 │   ├── nli_eda.py               # XDA core: knapsack DP optimization & evaluation
 │   ├── nli_eda_engine.py        # PyTorch forward-pass simulator (3/4-stage)
