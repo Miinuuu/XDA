@@ -68,15 +68,12 @@ def _get_nli_lut(func_name, optimize=False, device='cuda', M_target=16, mantissa
     # print(M_target)
     if cache_key not in cache:
         if optimize:
-            from nli_wqs_pt import dp_cutpoint_search_aliens, get_function, get_domain
-            func = get_function(func_name)
-            domain = get_domain(func_name)
-            cutpoints_list = dp_cutpoint_search_aliens(func, M_target=M_target, domain=domain, device='cuda', silent=True, mantissa_bits=mantissa_bits)
-            cutpoints = torch.tensor(cutpoints_list, dtype=torch.float32)
-            point_reg, mul_reg, lut_reg = build_lut(func, cutpoints, lut_bits)
-        else:
-            point_reg, mul_reg, lut_reg = build_lut_from_paper(func_name)
-            
+            raise NotImplementedError(
+                "optimized NLI cutpoints are not part of this artifact; "
+                "all reported NLI results use the paper-provided cutpoints "
+                "(build_lut_from_paper)")
+        point_reg, mul_reg, lut_reg = build_lut_from_paper(func_name)
+
         point_reg = point_reg.to(device)
         mul_reg = mul_reg.to(device)
         lut_reg = lut_reg.to(device)
@@ -163,95 +160,6 @@ def eda_softmax(x, dim=None, dtype=None, max_lut=256, max_k=5, t_bits=None):
     if dtype is not None:
         res = res.to(dtype)
     return res
-
-# ─────────────────────────────────────────────────────────────
-#  HPLA patching
-# ─────────────────────────────────────────────────────────────
-
-def hpla_activation(x, func_name, max_lut=256):
-    from nli_hpla_eval import hpla_forward
-    return hpla_forward(x, func_name, max_lut=max_lut)
-
-def hpla_softmax(x, dim=None, dtype=None, max_lut=256):
-    from nli_hpla_eval import hpla_forward
-    if dim is None:
-        dim = -1
-    x_max = x.max(dim=dim, keepdim=True).values
-    x_shifted = x - x_max
-
-    exp_x = hpla_forward(x_shifted, 'exp', max_lut=max_lut)
-    exp_sum = exp_x.sum(dim=dim, keepdim=True)
-    res = exp_x * hpla_forward(exp_sum, 'reciprocal', max_lut=max_lut)
-    if dtype is not None:
-        res = res.to(dtype)
-    return res
-
-def patch_model_hpla(model, max_lut=256):
-    """Patch all supported Activations, RMSNorm, and Attention Softmax with HPLA approximations."""
-    n_rms = n_act = n_softmax = 0
-
-    for name, module in model.named_modules():
-        module_type = type(module).__name__
-        if 'RMSNorm' in module_type:
-            def make_hpla_rmsnorm_forward(orig_module):
-                def hpla_rmsnorm_forward(hidden_states):
-                    input_dtype = hidden_states.dtype
-                    hidden_states = hidden_states.to(torch.float32)
-                    variance = hidden_states.pow(2).mean(-1, keepdim=True)
-                    inv_rms = hpla_activation(variance + orig_module.variance_epsilon, 'rsqrt', max_lut=max_lut)
-                    hidden_states = hidden_states * inv_rms
-                    return (orig_module.weight * hidden_states).to(input_dtype)
-                return hpla_rmsnorm_forward
-            module.forward = make_hpla_rmsnorm_forward(module)
-            n_rms += 1
-
-        if hasattr(module, 'act_fn') and type(module.act_fn) in ACTIVATION_MAP:
-            func_name = ACTIVATION_MAP[type(module.act_fn)]
-            class HPLAActivationModule(nn.Module):
-                def __init__(self, fn_name):
-                    super().__init__()
-                    self.fn_name = fn_name
-                def forward(self, x):
-                    return hpla_activation(x, self.fn_name, max_lut=max_lut)
-            module.act_fn = HPLAActivationModule(func_name)
-            n_act += 1
-
-        if 'Attention' in module_type:
-            orig_forward = module.forward
-            def make_hpla_attention_forward(orig_module, orig_fwd):
-                import sys
-                try:
-                    module_ns = sys.modules[orig_module.__module__]
-                except KeyError:
-                    module_ns = None
-
-                def hpla_attention_forward(*args, **kwargs):
-                    if module_ns and hasattr(module_ns, 'nn') and hasattr(module_ns.nn, 'functional'):
-                        orig_softmax = module_ns.nn.functional.softmax
-                        def custom_softmax(input, dim=None, _stacklevel=3, dtype=None):
-                            return hpla_softmax(input, dim=dim, dtype=dtype, max_lut=max_lut)
-                        module_ns.nn.functional.softmax = custom_softmax
-                        try:
-                            return orig_fwd(*args, **kwargs)
-                        finally:
-                            module_ns.nn.functional.softmax = orig_softmax
-                    else:
-                        import torch.nn.functional as F
-                        orig_softmax = F.softmax
-                        def custom_softmax(input, dim=None, _stacklevel=3, dtype=None):
-                            return hpla_softmax(input, dim=dim, dtype=dtype, max_lut=max_lut)
-                        F.softmax = custom_softmax
-                        try:
-                            return orig_fwd(*args, **kwargs)
-                        finally:
-                            F.softmax = orig_softmax
-
-                return hpla_attention_forward
-            module.forward = make_hpla_attention_forward(module, orig_forward)
-            n_softmax += 1
-
-    return n_rms, n_act, n_softmax
-
 
 # ─────────────────────────────────────────────────────────────
 #  NN-LUT patching
@@ -798,12 +706,8 @@ def run_table1_eval(
         configs.append('nli_addr_fp32')
     if mode in ('nli_full_fp32', 'all'):
         configs.append('nli_full_fp32')
-    if mode in ('nli_opt', 'all'):
-        configs.append('nli_opt')
     if mode in ('nli_eda', 'all'):
         configs.append('nli_eda')
-    if mode in ('nli_hpa', 'all'):
-        configs.append('nli_hpa')
     if mode in ('nn_lut', 'all'):
         configs.append('nn_lut')
     if mode in ('nn_lut_256', 'all'):
@@ -858,18 +762,10 @@ def run_table1_eval(
             print(f"  [2] Applying NLI patches (Full-FP32 upper bound)...")
             n_rms, n_act, n_soft = patch_model_nli(hf_model, optimize=False, variant='full_fp32')
             print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts")
-        elif config == 'nli_opt':
-            print(f"  [2] Applying NLI patches (Optimized Zero-Multiplier Cutpoints)...")
-            n_rms, n_act, n_soft = patch_model_nli(hf_model, optimize=True, variant='fp16_hw')
-            print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts")
         elif config == 'nli_eda':
             print(f"  [2] Applying EDA-NLI patches (Exponent-Direct Addressing)...")
             n_rms, n_act, n_soft = patch_model_eda(hf_model, t_bits=t_bits)
             print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts (t_bits={t_bits})")
-        elif config == 'nli_hpa':
-            print(f"  [2] Applying HPLA patches (Hierarchical Piecewise Linear Approximation)...")
-            n_rms, n_act, n_soft = patch_model_hpla(hf_model)
-            print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts")
         elif config == 'nn_lut':
             print(f"  [2] Applying NN-LUT patches (16-segment, paper default)...")
             n_rms, n_act, n_soft = patch_model_nn_lut(hf_model, n_segments=16)
