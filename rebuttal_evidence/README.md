@@ -34,7 +34,7 @@ Notes:
   documented in the script header).
 - The BF16 log's W=512 block is the source of the rebuttal's 19–34 / 36/36 / 32/32
   octave counts (one row per function).
-- The rebuttal's LUT-as-memory comparison (XDA 176 vs. NLI 210) counts Vivado's
+- The rebuttal's LUT-as-distributed-RAM comparison (XDA 176 vs. NLI 210) uses Vivado's
   "LUT as Distributed RAM" subcategory; the parent "LUT as Memory" row additionally
   includes shift-register LUTs (XDA 178 = 176 + 2 SRL; NLI 210 = 210 + 0 — see
   `fpga_dsp_enabled/*_nodsp_util.rpt`). Either level yields the same conclusion.
