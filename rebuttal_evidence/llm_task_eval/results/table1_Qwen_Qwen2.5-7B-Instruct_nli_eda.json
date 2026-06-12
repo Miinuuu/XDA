@@ -1,0 +1,23 @@
+{
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "mode": "nli_eda",
+  "table1": {
+    "nli_eda": {
+      "mmlu": 70.673693206096,
+      "gsm8k": null,
+      "humaneval": 41.46341463414634,
+      "zeroshot_avg": 70.00173512820116,
+      "wikitext2_ppl": 7.377649307250977,
+      "zeroshot_detail": {
+        "arc_challenge": 51.19453924914675,
+        "arc_easy": 75.58922558922558,
+        "boolq": 85.96330275229359,
+        "piqa": 79.92383025027203,
+        "hellaswag": 79.6355307707628,
+        "openbookqa": 48.4,
+        "lambada_openai": 68.11566078012808,
+        "winogrande": 71.19179163378058
+      }
+    }
+  }
+}

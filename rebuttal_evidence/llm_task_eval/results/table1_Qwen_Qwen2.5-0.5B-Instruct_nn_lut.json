@@ -1,0 +1,46 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "mode": "nn_lut",
+  "table1": {
+    "nn_lut": {
+      "wikitext2_ppl": 1958232.125,
+      "_done": [
+        "arc_challenge",
+        "arc_easy",
+        "boolq",
+        "gsm8k",
+        "hellaswag",
+        "humaneval",
+        "lambada_openai",
+        "mmlu",
+        "openbookqa",
+        "piqa",
+        "ppl",
+        "winogrande"
+      ],
+      "zeroshot_detail": {
+        "arc_challenge": 25.682593856655288,
+        "arc_easy": 25.88383838383838,
+        "boolq": 58.440366972477065,
+        "piqa": 51.4145810663765,
+        "hellaswag": 26.030671181039633,
+        "openbookqa": 31.2,
+        "lambada_openai": 0.0,
+        "winogrande": 49.408050513022886
+      },
+      "mmlu": 24.213075060532688,
+      "gsm8k": null,
+      "humaneval": 0.0,
+      "arc_challenge": 25.682593856655288,
+      "arc_easy": 25.88383838383838,
+      "boolq": 58.440366972477065,
+      "piqa": 51.4145810663765,
+      "hellaswag": 26.030671181039633,
+      "openbookqa": 31.2,
+      "lambada_openai": 0.0,
+      "winogrande": 49.408050513022886,
+      "zeroshot_avg": 33.50751274667621,
+      "_complete": true
+    }
+  }
+}

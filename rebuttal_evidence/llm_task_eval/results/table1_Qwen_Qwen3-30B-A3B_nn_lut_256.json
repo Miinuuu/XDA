@@ -1,0 +1,46 @@
+{
+  "model": "Qwen/Qwen3-30B-A3B",
+  "mode": "nn_lut_256",
+  "table1": {
+    "nn_lut_256": {
+      "wikitext2_ppl": 8.081428527832031,
+      "_done": [
+        "arc_challenge",
+        "arc_easy",
+        "boolq",
+        "gsm8k",
+        "hellaswag",
+        "humaneval",
+        "lambada_openai",
+        "mmlu",
+        "openbookqa",
+        "piqa",
+        "ppl",
+        "winogrande"
+      ],
+      "zeroshot_detail": {
+        "arc_challenge": 56.56996587030717,
+        "arc_easy": 79.29292929292929,
+        "boolq": 87.64525993883791,
+        "piqa": 79.70620239390642,
+        "hellaswag": 77.185819557857,
+        "openbookqa": 44.800000000000004,
+        "lambada_openai": 63.67164758393169,
+        "winogrande": 69.37647987371744
+      },
+      "mmlu": 76.59877510326164,
+      "gsm8k": null,
+      "humaneval": 38.41463414634146,
+      "arc_challenge": 56.56996587030717,
+      "arc_easy": 79.29292929292929,
+      "boolq": 87.64525993883791,
+      "piqa": 79.70620239390642,
+      "hellaswag": 77.185819557857,
+      "openbookqa": 44.800000000000004,
+      "lambada_openai": 63.67164758393169,
+      "winogrande": 69.37647987371744,
+      "zeroshot_avg": 69.78103806393587,
+      "_complete": true
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "mode": "nn_lut_256",
+  "table1": {
+    "nn_lut_256": {
+      "wikitext2_ppl": 6.866794109344482,
+      "_done": [
+        "arc_challenge",
+        "arc_easy",
+        "boolq",
+        "gsm8k",
+        "hellaswag",
+        "humaneval",
+        "lambada_openai",
+        "mmlu",
+        "openbookqa",
+        "piqa",
+        "ppl",
+        "winogrande"
+      ],
+      "zeroshot_detail": {
+        "arc_challenge": 55.2901023890785,
+        "arc_easy": 80.21885521885523,
+        "boolq": 85.04587155963303,
+        "piqa": 81.06637649619152,
+        "hellaswag": 79.23720374427405,
+        "openbookqa": 44.800000000000004,
+        "lambada_openai": 70.79371240054337,
+        "winogrande": 72.61247040252566
+      },
+      "mmlu": 63.07506053268766,
+      "gsm8k": null,
+      "humaneval": 53.65853658536586,
+      "arc_challenge": 55.2901023890785,
+      "arc_easy": 80.21885521885523,
+      "boolq": 85.04587155963303,
+      "piqa": 81.06637649619152,
+      "hellaswag": 79.23720374427405,
+      "openbookqa": 44.800000000000004,
+      "lambada_openai": 70.79371240054337,
+      "winogrande": 72.61247040252566,
+      "zeroshot_avg": 71.13307402638767,
+      "_complete": true
+    }
+  }
+}
