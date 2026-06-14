@@ -1,5 +1,5 @@
 // config_rom for rsqrt
-0A00  // [ 0] s=0 e= 0 k=5 base=0
+1A00  // [ 0] s=0 e= 0 k=5 base=0 CLAMP(edge)
 0620  // [ 1] s=0 e= 1 k=3 base=32
 0628  // [ 2] s=0 e= 2 k=3 base=40
 0630  // [ 3] s=0 e= 3 k=3 base=48
