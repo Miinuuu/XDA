@@ -11,7 +11,8 @@
 module fp_adder #(
   parameter EXP_WIDTH  = 8,   // FP32: 8, FP16: 5
   parameter MANT_WIDTH = 23,  // FP32: 23, FP16: 10
-  parameter BIAS       = 127  // FP32: 127, FP16: 15
+  parameter BIAS       = 127, // FP32: 127, FP16: 15
+  parameter GRADUAL_UNDERFLOW = 0
 ) (
   // Input A
   input                      io_a_sign,
@@ -155,6 +156,25 @@ module fp_adder #(
   wire signed [EXP_WIDTH+1:0] final_exp = round_overflow ? norm_exp + 1 : norm_exp;
   wire [MANT_WIDTH-1:0] final_mant = round_overflow ? rounded_mant[FULL_MANT-1:1] : rounded_mant[MANT_WIDTH-1:0];
 
+  // Optional diagnostic mode: preserve subnormal FP16/FP32 results instead of
+  // the submitted FTZ default.  With GRADUAL_UNDERFLOW=0, synthesis prunes this.
+  wire [EXP_WIDTH+2:0] sub_shift = GUARD_BITS + 1 - final_exp;
+  wire [WORK_WIDTH-1:0] sub_quot =
+      (sub_shift >= WORK_WIDTH) ? {WORK_WIDTH{1'b0}} : (norm_mant >> sub_shift);
+  wire sub_guard =
+      (sub_shift == 0 || sub_shift > WORK_WIDTH) ? 1'b0 :
+      ((norm_mant >> (sub_shift - 1)) & 1'b1);
+  wire [WORK_WIDTH-1:0] sub_sticky_mask =
+      (sub_shift > WORK_WIDTH) ? {WORK_WIDTH{1'b1}} :
+      (sub_shift <= 1) ? {WORK_WIDTH{1'b0}} :
+      ~({WORK_WIDTH{1'b1}} << (sub_shift - 1));
+  wire sub_sticky = |(norm_mant & sub_sticky_mask);
+  wire sub_round_up = sub_guard && (sub_sticky || sub_quot[0]);
+  wire [MANT_WIDTH:0] sub_rounded =
+      {1'b0, sub_quot[MANT_WIDTH-1:0]} + {{MANT_WIDTH{1'b0}}, sub_round_up};
+  wire sub_rounds_to_normal = sub_rounded[MANT_WIDTH];
+  wire sub_rounds_to_zero = (sub_rounded == {(MANT_WIDTH+1){1'b0}});
+
   //============================================================================
   // Special Cases
   //============================================================================
@@ -167,7 +187,8 @@ module fp_adder #(
   //============================================================================
   // Output
   //============================================================================
-  assign io_out_isZero = result_isZero;
+  assign io_out_isZero = result_isZero ||
+                         (GRADUAL_UNDERFLOW && underflow && sub_rounds_to_zero);
   assign io_out_isInf = result_isInf;
   assign io_out_isNaN = result_isNaN;
   
@@ -178,13 +199,19 @@ module fp_adder #(
   
   assign io_out_exp = result_isZero ? {EXP_WIDTH{1'b0}} :
                       (result_isInf || result_isNaN) ? {EXP_WIDTH{1'b1}} :
-                      underflow ? {EXP_WIDTH{1'b0}} :
+                      underflow ? (GRADUAL_UNDERFLOW && sub_rounds_to_normal ?
+                                   {{EXP_WIDTH-1{1'b0}}, 1'b1} :
+                                   {EXP_WIDTH{1'b0}}) :
                       final_exp[EXP_WIDTH-1:0];
   
   assign io_out_mant = result_isZero ? {MANT_WIDTH{1'b0}} :
                        result_isInf ? {MANT_WIDTH{1'b0}} :
                        result_isNaN ? {{MANT_WIDTH-1{1'b0}}, 1'b1} :
-                       underflow ? {MANT_WIDTH{1'b0}} :
+                       underflow ? (GRADUAL_UNDERFLOW && sub_rounds_to_normal ?
+                                    {MANT_WIDTH{1'b0}} :
+                                    GRADUAL_UNDERFLOW ?
+                                    sub_rounded[MANT_WIDTH-1:0] :
+                                    {MANT_WIDTH{1'b0}}) :
                        final_mant;
 
 endmodule

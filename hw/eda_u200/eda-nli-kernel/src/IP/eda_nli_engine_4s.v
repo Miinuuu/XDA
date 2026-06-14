@@ -20,7 +20,8 @@
 
 module eda_nli_engine_4s #(
     parameter T_BITS    = 10,
-    parameter LUT_DEPTH = 256
+    parameter LUT_DEPTH = 256,
+    parameter GRADUAL_UNDERFLOW = 0
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -131,7 +132,12 @@ module eda_nli_engine_4s #(
     wire [4:0] sub_exp;
     wire [9:0] sub_mant;
 
-    fp_adder #(.EXP_WIDTH(5), .MANT_WIDTH(10), .BIAS(15)) u_sub (
+    fp_adder #(
+        .EXP_WIDTH(5),
+        .MANT_WIDTH(10),
+        .BIAS(15),
+        .GRADUAL_UNDERFLOW(GRADUAL_UNDERFLOW)
+    ) u_sub (
         .io_a_sign (y1[15]),
         .io_a_exp  (y1[14:10]),
         .io_a_mant (y1[9:0]),
@@ -325,6 +331,24 @@ module eda_nli_engine_4s #(
     wire [MANT_WIDTH-1:0]       final_mant = round_overflow ? rounded_mant[MANT_WIDTH:1] :
                                                                rounded_mant[MANT_WIDTH-1:0];
 
+    // Optional diagnostic mode.  The submitted hardware keeps FTZ
+    // (GRADUAL_UNDERFLOW=0); this path only supports sensitivity checks.
+    wire [EXP_WIDTH+2:0] sub_shift = FRAC_START + 1 - final_exp;
+    wire [WORK_WIDTH-1:0] sub_quot =
+        (sub_shift >= WORK_WIDTH) ? {WORK_WIDTH{1'b0}} : (norm_mant >> sub_shift);
+    wire sub_guard =
+        (sub_shift == 0 || sub_shift > WORK_WIDTH) ? 1'b0 :
+        ((norm_mant >> (sub_shift - 1)) & 1'b1);
+    wire [WORK_WIDTH-1:0] sub_sticky_mask =
+        (sub_shift > WORK_WIDTH) ? {WORK_WIDTH{1'b1}} :
+        (sub_shift <= 1) ? {WORK_WIDTH{1'b0}} :
+        ~({WORK_WIDTH{1'b1}} << (sub_shift - 1));
+    wire sub_sticky = |(norm_mant & sub_sticky_mask);
+    wire sub_round_up = sub_guard && (sub_sticky || sub_quot[0]);
+    wire [MANT_WIDTH:0] sub_rounded =
+        {1'b0, sub_quot[MANT_WIDTH-1:0]} + {{MANT_WIDTH{1'b0}}, sub_round_up};
+    wire sub_rounds_to_normal = sub_rounded[MANT_WIDTH];
+
     // Special cases
     wire prod_isInf    = p3_diff_isInf && !p3_prod_isZero;
     wire result_isNaN  = p3_y0_isNaN || p3_diff_isNaN ||
@@ -345,13 +369,19 @@ module eda_nli_engine_4s #(
 
     wire [EXP_WIDTH-1:0] fma_out_exp = result_isZero ? {EXP_WIDTH{1'b0}} :
                                         (result_isInf_w || result_isNaN) ? {EXP_WIDTH{1'b1}} :
-                                        underflow ? {EXP_WIDTH{1'b0}} :
+                                        underflow ? (GRADUAL_UNDERFLOW && sub_rounds_to_normal ?
+                                                     {{EXP_WIDTH-1{1'b0}}, 1'b1} :
+                                                     {EXP_WIDTH{1'b0}}) :
                                         final_exp[EXP_WIDTH-1:0];
 
     wire [MANT_WIDTH-1:0] fma_out_mant = result_isZero  ? {MANT_WIDTH{1'b0}} :
                                           result_isInf_w ? {MANT_WIDTH{1'b0}} :
                                           result_isNaN   ? {{MANT_WIDTH-1{1'b0}}, 1'b1} :
-                                          underflow      ? {MANT_WIDTH{1'b0}} :
+                                          underflow      ? (GRADUAL_UNDERFLOW && sub_rounds_to_normal ?
+                                                            {MANT_WIDTH{1'b0}} :
+                                                            GRADUAL_UNDERFLOW ?
+                                                            sub_rounded[MANT_WIDTH-1:0] :
+                                                            {MANT_WIDTH{1'b0}}) :
                                           final_mant;
 
     wire [15:0] interp_result = {fma_out_sign, fma_out_exp, fma_out_mant};

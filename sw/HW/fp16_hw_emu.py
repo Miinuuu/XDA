@@ -4,6 +4,10 @@ Shared by all testbench generators (NN-LUT, NLI, EDA).
 """
 import numpy as np
 
+HW_MODE_FTZ = 'ftz'
+HW_MODE_IEEE_SUBNORMAL = 'ieee_subnormal'
+SUPPORTED_HW_MODES = (HW_MODE_FTZ, HW_MODE_IEEE_SUBNORMAL)
+
 
 def fp16_bits(val) -> int:
     return int.from_bytes(np.array([np.float16(val)], dtype=np.float16).tobytes(), 'little')
@@ -11,6 +15,35 @@ def fp16_bits(val) -> int:
 
 def bits_to_fp16(bits: int) -> np.float16:
     return np.frombuffer((bits & 0xFFFF).to_bytes(2, 'little'), dtype=np.float16)[0]
+
+
+def _validate_hw_mode(hw_mode: str) -> None:
+    if hw_mode not in SUPPORTED_HW_MODES:
+        raise ValueError(f"unsupported hw_mode {hw_mode!r}; expected one of {SUPPORTED_HW_MODES}")
+
+
+def _round_shift_right_rne(value: int, shift: int) -> int:
+    if shift <= 0:
+        return value << (-shift)
+    quotient = value >> shift
+    guard = (value >> (shift - 1)) & 1
+    sticky = (value & ((1 << (shift - 1)) - 1)) != 0 if shift > 1 else False
+    return quotient + (1 if guard and (sticky or (quotient & 1)) else 0)
+
+
+def _pack_underflow(sign: int, norm_mant: int, norm_exp: int,
+                    frac_shift: int, mant_width: int = 10,
+                    hw_mode: str = HW_MODE_FTZ) -> int:
+    _validate_hw_mode(hw_mode)
+    if hw_mode == HW_MODE_FTZ:
+        return sign << 15
+
+    rounded = _round_shift_right_rne(norm_mant, frac_shift + (1 - norm_exp))
+    if rounded == 0:
+        return sign << 15
+    if rounded >= (1 << mant_width):
+        return (sign << 15) | (1 << mant_width)
+    return (sign << 15) | (rounded & ((1 << mant_width) - 1))
 
 
 def fp16_ge(a: int, b: int) -> bool:
@@ -22,8 +55,14 @@ def fp16_ge(a: int, b: int) -> bool:
     else: return (a_mag == 0 and b_mag == 0)
 
 
-def fp_adder(a_bits: int, b_bits: int) -> int:
-    """Bit-exact emulation of fp_adder.v for FP16."""
+def fp_adder(a_bits: int, b_bits: int, hw_mode: str = HW_MODE_FTZ) -> int:
+    """Bit-exact emulation of fp_adder.v for FP16.
+
+    hw_mode='ftz' is the submitted RTL/default behavior.  hw_mode=
+    'ieee_subnormal' is an opt-in diagnostic mode for PyTorch-FP16 sensitivity
+    checks.
+    """
+    _validate_hw_mode(hw_mode)
     EXP_WIDTH = 5; MANT_WIDTH = 10; EXP_MAX = 31
     FULL_MANT = 11; GUARD_BITS = 3; WORK_WIDTH = 15
 
@@ -88,12 +127,13 @@ def fp_adder(a_bits: int, b_bits: int) -> int:
     if result_isNaN: return (0 << 15) | (EXP_MAX << 10) | 1
     elif result_isZero: return ((a_sign & b_sign) << 15)
     elif result_isInf: return ((a_sign if a_isInf else b_sign) << 15) | (EXP_MAX << 10)
-    elif underflow: return (result_sign << 15)
+    elif underflow: return _pack_underflow(result_sign, norm_mant, final_exp, GUARD_BITS, hw_mode=hw_mode)
     else: return (result_sign << 15) | ((final_exp & 0x1F) << 10) | (final_mant & 0x3FF)
 
 
-def fp_mult_norm(a_bits: int, b_bits: int) -> int:
+def fp_mult_norm(a_bits: int, b_bits: int, hw_mode: str = HW_MODE_FTZ) -> int:
     """Bit-exact emulation of fp_mult_norm.v for FP16."""
+    _validate_hw_mode(hw_mode)
     MANT_WIDTH = 10; BIAS = 15; EXP_MAX = 31
     FULL_MANT = 11; PROD_WIDTH = 22
 
@@ -146,6 +186,10 @@ def fp_mult_norm(a_bits: int, b_bits: int) -> int:
     underflow = (final_exp <= 0) and not result_isZero and not result_isInf and not result_isNaN
 
     if result_isNaN: return (0 << 15) | (EXP_MAX << 10) | 1
-    elif result_isZero or underflow: return 0
+    elif result_isZero: return 0
+    elif underflow:
+        return _pack_underflow(result_sign, norm_product, final_exp,
+                               PROD_WIDTH - 1 - MANT_WIDTH,
+                               hw_mode=hw_mode)
     elif result_isInf: return (result_sign << 15) | (EXP_MAX << 10)
     else: return (result_sign << 15) | ((final_exp & 0x1F) << 10) | (final_mant & 0x3FF)
