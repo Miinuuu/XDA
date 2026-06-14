@@ -20,7 +20,7 @@
 module eda_nli_engine_4s #(
     parameter T_BITS    = 10,
     parameter LUT_DEPTH = 256,
-    parameter GRADUAL_UNDERFLOW = 0
+    parameter GRADUAL_UNDERFLOW = 1
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -46,9 +46,6 @@ module eda_nli_engine_4s #(
     localparam GUARD_BITS = 3;
     localparam WORK_WIDTH = PROD_WIDTH + GUARD_BITS + 1;
     localparam FRAC_START = GUARD_BITS + (PROD_WIDTH - FULL_MANT);
-    localparam MANT_MSB   = WORK_WIDTH - 3;
-    localparam MANT_LSB   = FRAC_START;
-
     //==========================================================================
     // SRAM control signals
     //==========================================================================
@@ -339,21 +336,21 @@ module eda_nli_engine_4s #(
         $signed({2'b0, p3_x_exp}) -
         $signed({{(EXP_WIDTH+2-$clog2(WORK_WIDTH)){1'b0}}, lzc}) + 1;
 
-    wire [MANT_WIDTH-1:0] trunc_mant = norm_mant[MANT_MSB : MANT_LSB];
+    wire [FULL_MANT-1:0] sig_mant = norm_mant[FRAC_START+FULL_MANT-1 : FRAC_START];
     wire guard     = norm_mant[FRAC_START-1];
     wire round_bit = norm_mant[FRAC_START-2];
     wire sticky_r  = |norm_mant[FRAC_START-3:0];
-    wire round_up  = guard & (round_bit | sticky_r | trunc_mant[0]);
+    wire round_up  = guard & (round_bit | sticky_r | sig_mant[0]);
 
-    wire [MANT_WIDTH:0] rounded_mant = {1'b0, trunc_mant} + {{MANT_WIDTH{1'b0}}, round_up};
-    wire round_overflow = rounded_mant[MANT_WIDTH];
+    wire [FULL_MANT:0] rounded_mant = {1'b0, sig_mant} + {{FULL_MANT{1'b0}}, round_up};
+    wire round_overflow = rounded_mant[FULL_MANT];
 
     wire signed [EXP_WIDTH+1:0] final_exp  = round_overflow ? norm_exp + 1 : norm_exp;
     wire [MANT_WIDTH-1:0]       final_mant = round_overflow ? rounded_mant[MANT_WIDTH:1] :
                                                                rounded_mant[MANT_WIDTH-1:0];
 
-    // Optional diagnostic mode.  The submitted hardware keeps FTZ
-    // (GRADUAL_UNDERFLOW=0); this path only supports sensitivity checks.
+    // Gradual underflow is the default; set GRADUAL_UNDERFLOW=0 for FTZ
+    // sensitivity checks.
     wire [EXP_WIDTH+2:0] sub_shift = FRAC_START + 1 - final_exp;
     wire [WORK_WIDTH-1:0] sub_quot =
         (sub_shift >= WORK_WIDTH) ? {WORK_WIDTH{1'b0}} : (norm_mant >> sub_shift);

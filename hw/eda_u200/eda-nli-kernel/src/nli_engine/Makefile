@@ -1,6 +1,6 @@
 FUNC ?= silu
-HW_MODE ?= ftz
-GRADUAL_UNDERFLOW ?= 0
+HW_MODE ?= ieee_subnormal
+GRADUAL_UNDERFLOW ?= 1
 ALL_FUNCS = silu gelu exp sigmoid tanh hardswish mish rsqrt reciprocal
 GEN_DIR = ../../../../../gen
 

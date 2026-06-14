@@ -90,14 +90,11 @@ heavy-tailed draws — the widest one (Llama RMSNorm NLI max, printed 84.4) has
 a measured rerun spread of 101 ± 8, so expect values near 100 there. No
 comparison is affected in either direction.
 
-**FP16 underflow mode.** The submitted RTL and bit-exact test-vector
-generators use flush-to-zero (FTZ) for FP16 arithmetic underflow by default,
-matching the shipped hardware model and Table 1 flows. The generators also
-accept `--hw-mode ieee_subnormal` as an opt-in diagnostic mode for sensitivity
-checks against PyTorch/IEEE-style subnormal behavior; paper reproduction
-commands intentionally omit this flag and therefore run with `--hw-mode ftz`.
-The matching RTL diagnostic knob is `GRADUAL_UNDERFLOW=1`; it is not used by
-the canonical paper scripts.
+**FP16 underflow mode.** The submitted EDA RTL and bit-exact test-vector
+generators preserve FP16 subnormal results by default
+(`--hw-mode ieee_subnormal`, `GRADUAL_UNDERFLOW=1`).  Flush-to-zero remains
+available for sensitivity checks with `--hw-mode ftz` and
+`GRADUAL_UNDERFLOW=0`.
 
 **Table 2 (LLM quality, five models)** — one run per model × method:
 
@@ -195,7 +192,7 @@ cd hw/eda_u200/eda-nli-kernel/src/nli_engine
 make all              # Generate .mem + simulate (default: silu)
 make all FUNC=gelu    # Specify function
 make sim-all          # Test all 9 functions
-make sim-all-subnormal  # Diagnostic: --hw-mode ieee_subnormal + GRADUAL_UNDERFLOW=1
+make sim-all-subnormal  # Compatibility alias for the default subnormal mode
 make sim-exhaustive   # Exhaustive FP16 verification
 ```
 

@@ -29,7 +29,7 @@
 06E0  // [27] s=0 e=27 k=3 base=224
 06E8  // [28] s=0 e=28 k=3 base=232
 06F0  // [29] s=0 e=29 k=3 base=240
-14F8  // [30] s=0 e=30 k=2 base=248 CLAMP(edge)
+04F8  // [30] s=0 e=30 k=2 base=248
 10FC  // [31] s=0 e=31 CLAMP(domain)
 1000  // [32] s=1 e= 0 CLAMP(domain)
 1000  // [33] s=1 e= 1 CLAMP(domain)
