@@ -228,7 +228,7 @@ def _fp_adder(a_bits: int, b_bits: int, hw_mode: str = HW_MODE_FTZ) -> int:
 
 
 def _frac_mult_fp16(a_fp16: np.float16, t_int: int, t_bits: int = 10,
-                    hw_mode: str = HW_MODE_FTZ) -> np.float16:
+                    hw_mode: str = HW_MODE_IEEE_SUBNORMAL) -> np.float16:
     """Bit-exact emulation of frac_mult.v: result = a × (t_int / 2^t_bits)."""
     _validate_hw_mode(hw_mode)
     EXP_WIDTH = 5
@@ -330,7 +330,7 @@ def _frac_mult_fp16(a_fp16: np.float16, t_int: int, t_bits: int = 10,
 
 
 def hw_eda_forward_scalar(x_bits: int, config_rom: list, func_lut_f32: list,
-                          hw_mode: str = HW_MODE_FTZ) -> float:
+                          hw_mode: str = HW_MODE_IEEE_SUBNORMAL) -> float:
     """Simulate the exact hardware pipeline for a single FP16 input (as bits)."""
     _validate_hw_mode(hw_mode)
     sign = (x_bits >> 15) & 1
@@ -400,7 +400,7 @@ def hw_eda_forward_scalar(x_bits: int, config_rom: list, func_lut_f32: list,
 
 def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
                        max_k: int = 5, output_dir: str = '.',
-                       hw_mode: str = HW_MODE_FTZ):
+                       hw_mode: str = HW_MODE_IEEE_SUBNORMAL):
     _validate_hw_mode(hw_mode)
     os.makedirs(output_dir, exist_ok=True)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -413,8 +413,10 @@ def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
     # Detect clipped (edge) bins by comparing with original exponent ranges
     original_bins = {}
     for e in range(1, 31):
-        original_bins[(0, e)] = (2.0**(e-15), 2.0**(e-14))
-        original_bins[(1, e)] = (-(2.0**(e-14)), -(2.0**(e-15)))
+        lo = 2.0**(e-15)
+        hi = 65504.0 if e == 30 else 2.0**(e-14)
+        original_bins[(0, e)] = (lo, hi)
+        original_bins[(1, e)] = (-hi, -lo)
     original_bins[(0, 0)] = (2.0**(-24), 2.0**(-14))
     original_bins[(1, 0)] = (-(2.0**(-14)), -(2.0**(-24)))
 
@@ -531,9 +533,10 @@ if __name__ == '__main__':
     parser.add_argument('--max-lut', type=int, default=254, help='Max LUT entries')
     parser.add_argument('--max-k', type=int, default=5, help='Max K bits')
     parser.add_argument('--output-dir', default=None, help='Output directory')
-    parser.add_argument('--hw-mode', choices=SUPPORTED_HW_MODES, default=HW_MODE_FTZ,
-                        help='FP16 underflow mode: ftz is the submitted RTL default; '
-                             'ieee_subnormal is an opt-in diagnostic mode')
+    parser.add_argument('--hw-mode', choices=SUPPORTED_HW_MODES,
+                        default=HW_MODE_IEEE_SUBNORMAL,
+                        help='FP16 underflow mode: ieee_subnormal matches the default EDA RTL; '
+                             'ftz is retained for sensitivity checks')
     args = parser.parse_args()
 
     output_dir = args.output_dir or args.legacy_output_dir or os.path.dirname(os.path.abspath(__file__))

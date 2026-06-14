@@ -6,7 +6,7 @@
 
 module tb_eda_nli_engine_4s;
 
-    parameter GRADUAL_UNDERFLOW = 0;
+    parameter GRADUAL_UNDERFLOW = 1;
 
     localparam CLK_PERIOD = 10;
     localparam T_BITS     = 10;

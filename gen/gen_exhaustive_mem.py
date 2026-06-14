@@ -18,7 +18,8 @@ import torch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'sw'))
 from gen_eda_mem import (generate_mem_files as _gen_mem_base,
-                         fp32_to_fp16_hex, fp32_to_fp16_bits)
+                         fp32_to_fp16_hex, fp32_to_fp16_bits,
+                         HW_MODE_IEEE_SUBNORMAL)
 from gen_eda_mem_fma import hw_eda_forward_fma as hw_eda_forward_scalar
 from nli_eda import optimize_eda, get_function, get_domain, _generate_fp16_grid
 
@@ -63,7 +64,8 @@ def generate_exhaustive(func_name, output_dir):
         count = 0
         for x_val in grid.numpy():
             x_bits = fp32_to_fp16_bits(x_val)
-            y_hw = hw_eda_forward_scalar(x_bits, config_rom_entries, lut_vals)
+            y_hw = hw_eda_forward_scalar(x_bits, config_rom_entries, lut_vals,
+                                         hw_mode=HW_MODE_IEEE_SUBNORMAL)
             if np.isnan(y_hw):
                 continue
             y_bits = fp32_to_fp16_bits(y_hw)

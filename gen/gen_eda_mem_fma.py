@@ -26,7 +26,7 @@ from nli_eda import optimize_eda, get_function, get_domain
 from gen_eda_mem import (
     fp32_to_fp16_hex, fp32_to_fp16_bits, fp16_bits_to_float,
     _fp16_bits, _bits_to_fp16, _fp_adder, _pack_underflow,
-    HW_MODE_FTZ, SUPPORTED_HW_MODES, _validate_hw_mode,
+    HW_MODE_FTZ, HW_MODE_IEEE_SUBNORMAL, SUPPORTED_HW_MODES, _validate_hw_mode,
     hw_eda_forward_scalar, generate_mem_files as _gen_config_and_lut,
 )
 
@@ -34,7 +34,7 @@ T_BITS = 10
 
 
 def _fma_interp(y0_bits: int, diff_bits: int, t_int: int,
-                hw_mode: str = HW_MODE_FTZ) -> int:
+                hw_mode: str = HW_MODE_IEEE_SUBNORMAL) -> int:
     """Bit-exact emulation of fma_interp.v: result = y0 + diff * (t_int / 2^T_BITS).
 
     Single normalize/round at output (no intermediate rounding).
@@ -48,8 +48,7 @@ def _fma_interp(y0_bits: int, diff_bits: int, t_int: int,
     GUARD_BITS = 3
     WORK_WIDTH = PROD_WIDTH + GUARD_BITS + 1  # 25
     FRAC_START = GUARD_BITS + (PROD_WIDTH - FULL_MANT)  # 13
-    MANT_MSB = WORK_WIDTH - 3          # 22
-    MANT_LSB = FRAC_START              # 13
+    SIG_LSB  = FRAC_START                  # 13
 
     MASK_WORK = (1 << WORK_WIDTH) - 1
     MASK_WORK1 = (1 << (WORK_WIDTH + 1)) - 1
@@ -159,15 +158,15 @@ def _fma_interp(y0_bits: int, diff_bits: int, t_int: int,
         norm_mant = (sum_abs << shift) & MASK_WORK
         norm_exp = x_exp - lzc + 1
 
-    # Extract mantissa and rounding bits
-    trunc_mant = (norm_mant >> MANT_LSB) & ((1 << MANT_WIDTH) - 1)
+    # Extract hidden-bit significand and rounding bits.
+    sig_mant  = (norm_mant >> SIG_LSB) & ((1 << FULL_MANT) - 1)
     guard     = (norm_mant >> (FRAC_START - 1)) & 1
     round_bit = (norm_mant >> (FRAC_START - 2)) & 1
     sticky_r  = 1 if (norm_mant & ((1 << (FRAC_START - 2)) - 1)) != 0 else 0
-    round_up  = guard & (round_bit | sticky_r | (trunc_mant & 1))
+    round_up  = guard & (round_bit | sticky_r | (sig_mant & 1))
 
-    rounded = trunc_mant + (1 if round_up else 0)
-    round_overflow = (rounded >> MANT_WIDTH) & 1
+    rounded = sig_mant + (1 if round_up else 0)
+    round_overflow = (rounded >> FULL_MANT) & 1
 
     if round_overflow:
         final_exp  = norm_exp + 1
@@ -205,7 +204,7 @@ def _fma_interp(y0_bits: int, diff_bits: int, t_int: int,
 
 
 def hw_eda_forward_fma(x_bits: int, config_rom: list, func_lut_f32: list,
-                       hw_mode: str = HW_MODE_FTZ) -> float:
+                       hw_mode: str = HW_MODE_IEEE_SUBNORMAL) -> float:
     """Simulate the 7-stage FMA pipeline for a single FP16 input (as bits)."""
     _validate_hw_mode(hw_mode)
     sign = (x_bits >> 15) & 1
@@ -264,7 +263,7 @@ def hw_eda_forward_fma(x_bits: int, config_rom: list, func_lut_f32: list,
 def generate_test_vectors(func_name: str = 'silu', max_lut: int = 254,
                           max_k: int = 5, output_dir: str = '.',
                           exhaustive: bool = False,
-                          hw_mode: str = HW_MODE_FTZ):
+                          hw_mode: str = HW_MODE_IEEE_SUBNORMAL):
     """Generate config_rom, func_lut, and FMA-accurate test vectors."""
     _validate_hw_mode(hw_mode)
     os.makedirs(output_dir, exist_ok=True)
@@ -279,8 +278,10 @@ def generate_test_vectors(func_name: str = 'silu', max_lut: int = 254,
     # Detect clipped bins
     original_bins = {}
     for e in range(1, 31):
-        original_bins[(0, e)] = (2.0**(e-15), 2.0**(e-14))
-        original_bins[(1, e)] = (-(2.0**(e-14)), -(2.0**(e-15)))
+        lo = 2.0**(e-15)
+        hi = 65504.0 if e == 30 else 2.0**(e-14)
+        original_bins[(0, e)] = (lo, hi)
+        original_bins[(1, e)] = (-hi, -lo)
     original_bins[(0, 0)] = (2.0**(-24), 2.0**(-14))
     original_bins[(1, 0)] = (-(2.0**(-14)), -(2.0**(-24)))
 
@@ -404,9 +405,10 @@ if __name__ == '__main__':
     parser.add_argument('--output-dir', type=str, default='.', help='Output directory')
     parser.add_argument('--exhaustive', action='store_true',
                         help='Generate exhaustive FP16 test vectors (all representable values)')
-    parser.add_argument('--hw-mode', choices=SUPPORTED_HW_MODES, default=HW_MODE_FTZ,
-                        help='FP16 underflow mode: ftz is the submitted RTL default; '
-                             'ieee_subnormal is an opt-in diagnostic mode')
+    parser.add_argument('--hw-mode', choices=SUPPORTED_HW_MODES,
+                        default=HW_MODE_IEEE_SUBNORMAL,
+                        help='FP16 underflow mode: ieee_subnormal matches the default EDA RTL; '
+                             'ftz is retained for sensitivity checks')
     args = parser.parse_args()
 
     generate_test_vectors(args.func, args.max_lut, args.max_k, args.output_dir,
