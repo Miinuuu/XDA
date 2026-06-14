@@ -6,6 +6,8 @@
 
 module tb_eda_nli_engine_4s;
 
+    parameter GRADUAL_UNDERFLOW = 0;
+
     localparam CLK_PERIOD = 10;
     localparam T_BITS     = 10;
     localparam LUT_DEPTH  = 256;
@@ -21,7 +23,11 @@ module tb_eda_nli_engine_4s;
     reg  [8:0]  cfg_addr;
     reg  [15:0] cfg_wdata;
 
-    eda_nli_engine_4s #(.T_BITS(T_BITS), .LUT_DEPTH(LUT_DEPTH)) u_dut (
+    eda_nli_engine_4s #(
+        .T_BITS(T_BITS),
+        .LUT_DEPTH(LUT_DEPTH),
+        .GRADUAL_UNDERFLOW(GRADUAL_UNDERFLOW)
+    ) u_dut (
         .clk(clk), .rst_n(rst_n),
         .i_valid(i_valid), .i_data(i_data),
         .o_valid(o_valid), .o_data(o_data),
@@ -100,6 +106,7 @@ module tb_eda_nli_engine_4s;
 
         $display("=== EDA-NLI 4-Stage FMA Engine Testbench ===");
         $display("  Pipeline: %0d stages, T_BITS: %0d, LUT: %0d", PIPELINE_LATENCY, T_BITS, LUT_DEPTH);
+        $display("  Gradual underflow: %0d", GRADUAL_UNDERFLOW);
         $display("  Loaded %0d test vectors", num_tests);
 
         repeat(5) @(posedge clk);

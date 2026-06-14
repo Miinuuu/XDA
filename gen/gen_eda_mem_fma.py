@@ -25,18 +25,21 @@ from nli_eda import optimize_eda, get_function, get_domain
 # Import shared utilities from the original gen_eda_mem
 from gen_eda_mem import (
     fp32_to_fp16_hex, fp32_to_fp16_bits, fp16_bits_to_float,
-    _fp16_bits, _bits_to_fp16, _fp_adder,
+    _fp16_bits, _bits_to_fp16, _fp_adder, _pack_underflow,
+    HW_MODE_FTZ, SUPPORTED_HW_MODES, _validate_hw_mode,
     hw_eda_forward_scalar, generate_mem_files as _gen_config_and_lut,
 )
 
 T_BITS = 10
 
 
-def _fma_interp(y0_bits: int, diff_bits: int, t_int: int) -> int:
+def _fma_interp(y0_bits: int, diff_bits: int, t_int: int,
+                hw_mode: str = HW_MODE_FTZ) -> int:
     """Bit-exact emulation of fma_interp.v: result = y0 + diff * (t_int / 2^T_BITS).
 
     Single normalize/round at output (no intermediate rounding).
     """
+    _validate_hw_mode(hw_mode)
     EXP_WIDTH = 5
     MANT_WIDTH = 10
     EXP_MAX = 31
@@ -195,13 +198,16 @@ def _fma_interp(y0_bits: int, diff_bits: int, t_int: int) -> int:
         out_sign = y0_sign if y0_isInf else diff_sign
         return (out_sign << 15) | (EXP_MAX << 10)
     elif underflow:
-        return (result_sign << 15)
+        return _pack_underflow(result_sign, norm_mant, final_exp, FRAC_START,
+                               hw_mode=hw_mode)
     else:
         return (result_sign << 15) | ((final_exp & 0x1F) << 10) | (final_mant & 0x3FF)
 
 
-def hw_eda_forward_fma(x_bits: int, config_rom: list, func_lut_f32: list) -> float:
+def hw_eda_forward_fma(x_bits: int, config_rom: list, func_lut_f32: list,
+                       hw_mode: str = HW_MODE_FTZ) -> float:
     """Simulate the 7-stage FMA pipeline for a single FP16 input (as bits)."""
+    _validate_hw_mode(hw_mode)
     sign = (x_bits >> 15) & 1
     exp  = (x_bits >> 10) & 0x1F
     mant = x_bits & 0x3FF
@@ -242,7 +248,7 @@ def hw_eda_forward_fma(x_bits: int, config_rom: list, func_lut_f32: list) -> flo
 
     # Stages 2b-2c: fp_adder_2s subtraction (same function as fp_adder)
     neg_y0_bits = y0_bits ^ 0x8000
-    diff_bits = _fp_adder(y1_bits, neg_y0_bits)
+    diff_bits = _fp_adder(y1_bits, neg_y0_bits, hw_mode=hw_mode)
 
     # isZero handling
     diff_f16 = _bits_to_fp16(diff_bits)
@@ -250,19 +256,21 @@ def hw_eda_forward_fma(x_bits: int, config_rom: list, func_lut_f32: list) -> flo
         diff_bits = 0x0000
 
     # Stages 3-5: FMA interpolation (single normalize/round)
-    result_bits = _fma_interp(y0_bits, diff_bits, t_int)
+    result_bits = _fma_interp(y0_bits, diff_bits, t_int, hw_mode=hw_mode)
 
     return float(_bits_to_fp16(result_bits))
 
 
 def generate_test_vectors(func_name: str = 'silu', max_lut: int = 254,
                           max_k: int = 5, output_dir: str = '.',
-                          exhaustive: bool = False):
+                          exhaustive: bool = False,
+                          hw_mode: str = HW_MODE_FTZ):
     """Generate config_rom, func_lut, and FMA-accurate test vectors."""
+    _validate_hw_mode(hw_mode)
     os.makedirs(output_dir, exist_ok=True)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    print(f"Generating EDA-NLI 4s (FMA) memory files for: {func_name}")
+    print(f"Generating EDA-NLI 4s (FMA) memory files for: {func_name} (hw_mode={hw_mode})")
     config = optimize_eda(func_name, max_lut=max_lut, max_k=max_k, hw_order=True,
                           device=device, verbose=True)
     domain = get_domain(func_name)
@@ -347,11 +355,12 @@ def generate_test_vectors(func_name: str = 'silu', max_lut: int = 254,
         test_inputs_f32 += [0.0, 0.5, -0.5, 1.0, -1.0, 2.0, -2.0]
 
     with open(os.path.join(output_dir, 'test_vectors_4s.mem'), 'w') as f:
-        f.write(f"// test vectors for {func_name} (FMA pipeline, HW-accurate)\n")
+        f.write(f"// test vectors for {func_name} (FMA pipeline, HW-accurate, hw_mode={hw_mode})\n")
         count = 0
         for x_f32 in test_inputs_f32:
             x_bits = fp32_to_fp16_bits(x_f32)
-            y_hw = hw_eda_forward_fma(x_bits, config_rom_entries, lut_vals)
+            y_hw = hw_eda_forward_fma(x_bits, config_rom_entries, lut_vals,
+                                      hw_mode=hw_mode)
             if np.isnan(y_hw):
                 continue
             y_bits = fp32_to_fp16_bits(y_hw)
@@ -364,7 +373,8 @@ def generate_test_vectors(func_name: str = 'silu', max_lut: int = 254,
     y_hw_all = []
     for x in test_inputs_f32:
         xb = fp32_to_fp16_bits(x)
-        yh = hw_eda_forward_fma(xb, config_rom_entries, lut_vals)
+        yh = hw_eda_forward_fma(xb, config_rom_entries, lut_vals,
+                                hw_mode=hw_mode)
         y_hw_all.append(yh if not np.isnan(yh) else 0.0)
     y_hw_t = torch.tensor(y_hw_all)
     abs_err = torch.abs(y_hw_t - y_ref)
@@ -375,8 +385,10 @@ def generate_test_vectors(func_name: str = 'silu', max_lut: int = 254,
     diff_count = 0
     for x in test_inputs_f32:
         xb = fp32_to_fp16_bits(x)
-        y_old = hw_eda_forward_scalar(xb, config_rom_entries, lut_vals)
-        y_new = hw_eda_forward_fma(xb, config_rom_entries, lut_vals)
+        y_old = hw_eda_forward_scalar(xb, config_rom_entries, lut_vals,
+                                      hw_mode=hw_mode)
+        y_new = hw_eda_forward_fma(xb, config_rom_entries, lut_vals,
+                                   hw_mode=hw_mode)
         if not np.isnan(y_old) and not np.isnan(y_new):
             if fp32_to_fp16_bits(y_old) != fp32_to_fp16_bits(y_new):
                 diff_count += 1
@@ -392,7 +404,10 @@ if __name__ == '__main__':
     parser.add_argument('--output-dir', type=str, default='.', help='Output directory')
     parser.add_argument('--exhaustive', action='store_true',
                         help='Generate exhaustive FP16 test vectors (all representable values)')
+    parser.add_argument('--hw-mode', choices=SUPPORTED_HW_MODES, default=HW_MODE_FTZ,
+                        help='FP16 underflow mode: ftz is the submitted RTL default; '
+                             'ieee_subnormal is an opt-in diagnostic mode')
     args = parser.parse_args()
 
     generate_test_vectors(args.func, args.max_lut, args.max_k, args.output_dir,
-                          exhaustive=args.exhaustive)
+                          exhaustive=args.exhaustive, hw_mode=args.hw_mode)

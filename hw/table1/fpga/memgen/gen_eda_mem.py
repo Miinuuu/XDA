@@ -15,6 +15,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from nli_eda import optimize_eda, get_function, get_domain, get_fp16_exponent_bins
 
 T_BITS = 10  # adaptive: left-justified to 10 bits (matches RTL T_BITS=10)
+HW_MODE_FTZ = 'ftz'
+HW_MODE_IEEE_SUBNORMAL = 'ieee_subnormal'
+SUPPORTED_HW_MODES = (HW_MODE_FTZ, HW_MODE_IEEE_SUBNORMAL)
 
 
 def fp32_to_fp16_hex(val: float) -> str:
@@ -43,8 +46,38 @@ def _bits_to_fp16(bits: int) -> np.float16:
     return np.frombuffer((bits & 0xFFFF).to_bytes(2, 'little'), dtype=np.float16)[0]
 
 
-def _fp_adder(a_bits: int, b_bits: int) -> int:
+def _validate_hw_mode(hw_mode: str) -> None:
+    if hw_mode not in SUPPORTED_HW_MODES:
+        raise ValueError(f"unsupported hw_mode {hw_mode!r}; expected one of {SUPPORTED_HW_MODES}")
+
+
+def _round_shift_right_rne(value: int, shift: int) -> int:
+    if shift <= 0:
+        return value << (-shift)
+    quotient = value >> shift
+    guard = (value >> (shift - 1)) & 1
+    sticky = (value & ((1 << (shift - 1)) - 1)) != 0 if shift > 1 else False
+    return quotient + (1 if guard and (sticky or (quotient & 1)) else 0)
+
+
+def _pack_underflow(sign: int, norm_mant: int, norm_exp: int,
+                    frac_shift: int, mant_width: int = 10,
+                    hw_mode: str = HW_MODE_FTZ) -> int:
+    _validate_hw_mode(hw_mode)
+    if hw_mode == HW_MODE_FTZ:
+        return sign << 15
+
+    rounded = _round_shift_right_rne(norm_mant, frac_shift + (1 - norm_exp))
+    if rounded == 0:
+        return sign << 15
+    if rounded >= (1 << mant_width):
+        return (sign << 15) | (1 << mant_width)
+    return (sign << 15) | (rounded & ((1 << mant_width) - 1))
+
+
+def _fp_adder(a_bits: int, b_bits: int, hw_mode: str = HW_MODE_FTZ) -> int:
     """Bit-exact emulation of fp_adder.v for FP16. Returns packed 16-bit result."""
+    _validate_hw_mode(hw_mode)
     EXP_WIDTH = 5
     MANT_WIDTH = 10
     EXP_MAX = 31
@@ -189,13 +222,15 @@ def _fp_adder(a_bits: int, b_bits: int) -> int:
         out_sign = a_sign if a_isInf else b_sign
         return (out_sign << 15) | (EXP_MAX << 10) | 0
     elif underflow:
-        return (result_sign << 15) | 0
+        return _pack_underflow(result_sign, norm_mant, final_exp, GUARD_BITS, hw_mode=hw_mode)
     else:
         return (result_sign << 15) | ((final_exp & 0x1F) << 10) | (final_mant & 0x3FF)
 
 
-def _frac_mult_fp16(a_fp16: np.float16, t_int: int, t_bits: int = 10) -> np.float16:
+def _frac_mult_fp16(a_fp16: np.float16, t_int: int, t_bits: int = 10,
+                    hw_mode: str = HW_MODE_FTZ) -> np.float16:
     """Bit-exact emulation of frac_mult.v: result = a × (t_int / 2^t_bits)."""
+    _validate_hw_mode(hw_mode)
     EXP_WIDTH = 5
     MANT_WIDTH = 10
     BIAS = 15
@@ -277,9 +312,10 @@ def _frac_mult_fp16(a_fp16: np.float16, t_int: int, t_bits: int = 10) -> np.floa
     overflow  = (final_exp >= EXP_MAX)
 
     if underflow:
-        out_sign = a_sign
-        out_exp = 0
-        out_mant = 0
+        out_bits = _pack_underflow(a_sign, norm_product, final_exp,
+                                   PROD_WIDTH - 1 - MANT_WIDTH,
+                                   hw_mode=hw_mode)
+        return np.frombuffer(out_bits.to_bytes(2, 'little'), dtype=np.float16)[0]
     elif overflow:
         out_sign = a_sign
         out_exp = EXP_MAX
@@ -293,8 +329,10 @@ def _frac_mult_fp16(a_fp16: np.float16, t_int: int, t_bits: int = 10) -> np.floa
     return np.frombuffer(out_bits.to_bytes(2, 'little'), dtype=np.float16)[0]
 
 
-def hw_eda_forward_scalar(x_bits: int, config_rom: list, func_lut_f32: list) -> float:
+def hw_eda_forward_scalar(x_bits: int, config_rom: list, func_lut_f32: list,
+                          hw_mode: str = HW_MODE_FTZ) -> float:
     """Simulate the exact hardware pipeline for a single FP16 input (as bits)."""
+    _validate_hw_mode(hw_mode)
     sign = (x_bits >> 15) & 1
     exp  = (x_bits >> 10) & 0x1F
     mant = x_bits & 0x3FF
@@ -337,7 +375,7 @@ def hw_eda_forward_scalar(x_bits: int, config_rom: list, func_lut_f32: list) -> 
     y0_bits = _fp16_bits(y0)
     y1_bits = _fp16_bits(y1)
     neg_y0_bits = y0_bits ^ 0x8000  # flip sign for subtraction
-    diff_bits = _fp_adder(y1_bits, neg_y0_bits)
+    diff_bits = _fp_adder(y1_bits, neg_y0_bits, hw_mode=hw_mode)
 
     # isZero handling (RTL: s2_diff = sub_isZero ? 0 : packed)
     diff_f16 = _bits_to_fp16(diff_bits)
@@ -345,11 +383,12 @@ def hw_eda_forward_scalar(x_bits: int, config_rom: list, func_lut_f32: list) -> 
         diff_bits = 0x0000
 
     # Stage 3: frac_mult — bit-exact emulation
-    product_f16 = _frac_mult_fp16(_bits_to_fp16(diff_bits), t_int, T_BITS)
+    product_f16 = _frac_mult_fp16(_bits_to_fp16(diff_bits), t_int, T_BITS,
+                                  hw_mode=hw_mode)
 
     # Stage 4: FP16 addition via fp_adder(y0, product)
     product_bits = _fp16_bits(product_f16)
-    result_bits = _fp_adder(y0_bits, product_bits)
+    result_bits = _fp_adder(y0_bits, product_bits, hw_mode=hw_mode)
 
     # isZero handling (RTL: interp_result = add_isZero ? 0 : packed)
     result_f16 = _bits_to_fp16(result_bits)
@@ -360,11 +399,13 @@ def hw_eda_forward_scalar(x_bits: int, config_rom: list, func_lut_f32: list) -> 
 
 
 def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
-                       max_k: int = 5, output_dir: str = '.'):
+                       max_k: int = 5, output_dir: str = '.',
+                       hw_mode: str = HW_MODE_FTZ):
+    _validate_hw_mode(hw_mode)
     os.makedirs(output_dir, exist_ok=True)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    print(f"Generating EDA-NLI memory files for: {func_name}")
+    print(f"Generating EDA-NLI memory files for: {func_name} (hw_mode={hw_mode})")
     config = optimize_eda(func_name, max_lut=max_lut, max_k=max_k, hw_order=True,
                           device=device, verbose=True)
     domain = get_domain(func_name)
@@ -445,11 +486,12 @@ def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
     test_inputs_f32 += [0.0, 0.5, -0.5, 1.0, -1.0, 2.0, -2.0]
 
     with open(os.path.join(output_dir, 'test_vectors.mem'), 'w') as f:
-        f.write(f"// test vectors for {func_name} (HW-accurate expected)\n")
+        f.write(f"// test vectors for {func_name} (HW-accurate expected, hw_mode={hw_mode})\n")
         count = 0
         for x_f32 in test_inputs_f32:
             x_bits = fp32_to_fp16_bits(x_f32)
-            y_hw = hw_eda_forward_scalar(x_bits, config_rom_entries, lut_vals)
+            y_hw = hw_eda_forward_scalar(x_bits, config_rom_entries, lut_vals,
+                                          hw_mode=hw_mode)
             if np.isnan(y_hw):
                 continue
             y_bits = fp32_to_fp16_bits(y_hw)
@@ -464,7 +506,8 @@ def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
     in_clamp = []
     for x in test_inputs_f32:
         xb = fp32_to_fp16_bits(x)
-        yh = hw_eda_forward_scalar(xb, config_rom_entries, lut_vals)
+        yh = hw_eda_forward_scalar(xb, config_rom_entries, lut_vals,
+                                   hw_mode=hw_mode)
         y_hw_all.append(yh if not np.isnan(yh) else 0.0)
         in_clamp.append(bool((config_rom_entries[(xb >> 10) & 0x3F] >> 12) & 1))
     y_hw_t = torch.tensor(y_hw_all)
@@ -480,6 +523,19 @@ def generate_mem_files(func_name: str = 'silu', max_lut: int = 254,
 
 
 if __name__ == '__main__':
-    func_name = sys.argv[1] if len(sys.argv) > 1 else 'silu'
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else os.path.dirname(os.path.abspath(__file__))
-    generate_mem_files(func_name, output_dir=output_dir)
+    import argparse
+    parser = argparse.ArgumentParser(description='Generate mem files for EDA-NLI engine')
+    parser.add_argument('func', nargs='?', default='silu', help='Target function')
+    parser.add_argument('legacy_output_dir', nargs='?',
+                        help='Output directory, kept for the legacy positional CLI')
+    parser.add_argument('--max-lut', type=int, default=254, help='Max LUT entries')
+    parser.add_argument('--max-k', type=int, default=5, help='Max K bits')
+    parser.add_argument('--output-dir', default=None, help='Output directory')
+    parser.add_argument('--hw-mode', choices=SUPPORTED_HW_MODES, default=HW_MODE_FTZ,
+                        help='FP16 underflow mode: ftz is the submitted RTL default; '
+                             'ieee_subnormal is an opt-in diagnostic mode')
+    args = parser.parse_args()
+
+    output_dir = args.output_dir or args.legacy_output_dir or os.path.dirname(os.path.abspath(__file__))
+    generate_mem_files(args.func, max_lut=args.max_lut, max_k=args.max_k,
+                       output_dir=output_dir, hw_mode=args.hw_mode)
