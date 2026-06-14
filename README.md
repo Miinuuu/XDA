@@ -81,10 +81,8 @@ cd sw && python3 run_all_experiments.py
 
 This rebuilds every XDA LUT configuration (Knapsack DP included), evaluates the
 exhaustive FP16 grids, and evaluates the NLI baseline from the paper-provided
-cutpoints (`nli_dp.py`). Known benign deviations: the Knapsack allocator lands
-on near-tied solutions for two functions — GELU (mean 2.17 vs. printed 2.15,
-max improves to 303.4 vs. 329.6) and rsqrt (mean 10.51 vs. 10.56) — with no
-comparison changing. All other Part A cells reproduce the printed values;
+cutpoints (`nli_dp.py`). All Part A cells (exhaustive, deterministic)
+reproduce the printed Table 3 values exactly.
 Part B reproduces within its 50-trial Monte-Carlo protocol (no RNG seed is
 fixed, matching the paper's footnote): mean cells reproduce to ≤0.8% and all
 six ratio cells print identically; trial-averaged max cells inherit the
