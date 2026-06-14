@@ -26,7 +26,7 @@ from nli_eda import optimize_eda, get_function, get_domain
 from gen_eda_mem import (
     fp32_to_fp16_hex, fp32_to_fp16_bits, fp16_bits_to_float,
     _fp16_bits, _bits_to_fp16, _fp_adder,
-    generate_mem_files as _gen_config_and_lut,
+    hw_eda_forward_scalar, generate_mem_files as _gen_config_and_lut,
 )
 
 T_BITS = 10
@@ -372,7 +372,6 @@ def generate_test_vectors(func_name: str = 'silu', max_lut: int = 254,
           f"mean_abs={abs_err.mean().item():.4e}")
 
     # Compare FMA vs original (2-round) pipeline
-    from HW.eda_nli.gen_eda_mem import hw_eda_forward_scalar
     diff_count = 0
     for x in test_inputs_f32:
         xb = fp32_to_fp16_bits(x)

@@ -31,35 +31,35 @@
 10FF  // [29] s=0 e=29 CLAMP(domain)
 10FF  // [30] s=0 e=30 CLAMP(domain)
 10FF  // [31] s=0 e=31 CLAMP(domain)
-008A  // [32] s=1 e= 0 k=0 base=138
-0089  // [33] s=1 e= 1 k=0 base=137
-0088  // [34] s=1 e= 2 k=0 base=136
-0087  // [35] s=1 e= 3 k=0 base=135
-0086  // [36] s=1 e= 4 k=0 base=134
-0085  // [37] s=1 e= 5 k=0 base=133
-0084  // [38] s=1 e= 6 k=0 base=132
-0083  // [39] s=1 e= 7 k=0 base=131
-0281  // [40] s=1 e= 8 k=1 base=129
-047D  // [41] s=1 e= 9 k=2 base=125
-0479  // [42] s=1 e=10 k=2 base=121
-0671  // [43] s=1 e=11 k=3 base=113
-0669  // [44] s=1 e=12 k=3 base=105
-0859  // [45] s=1 e=13 k=4 base=89
-0A39  // [46] s=1 e=14 k=5 base=57
-0A19  // [47] s=1 e=15 k=5 base=25
-0809  // [48] s=1 e=16 k=4 base=9
-0600  // [49] s=1 e=17 k=3 base=0
-1000  // [50] s=1 e=18 CLAMP(domain)
-1000  // [51] s=1 e=19 CLAMP(domain)
-1000  // [52] s=1 e=20 CLAMP(domain)
-1000  // [53] s=1 e=21 CLAMP(domain)
-1000  // [54] s=1 e=22 CLAMP(domain)
-1000  // [55] s=1 e=23 CLAMP(domain)
-1000  // [56] s=1 e=24 CLAMP(domain)
-1000  // [57] s=1 e=25 CLAMP(domain)
-1000  // [58] s=1 e=26 CLAMP(domain)
-1000  // [59] s=1 e=27 CLAMP(domain)
-1000  // [60] s=1 e=28 CLAMP(domain)
-1000  // [61] s=1 e=29 CLAMP(domain)
-1000  // [62] s=1 e=30 CLAMP(domain)
-1000  // [63] s=1 e=31 CLAMP(domain)
+0000  // [32] s=1 e= 0 k=0 base=0
+0001  // [33] s=1 e= 1 k=0 base=1
+0002  // [34] s=1 e= 2 k=0 base=2
+0003  // [35] s=1 e= 3 k=0 base=3
+0004  // [36] s=1 e= 4 k=0 base=4
+0005  // [37] s=1 e= 5 k=0 base=5
+0006  // [38] s=1 e= 6 k=0 base=6
+0007  // [39] s=1 e= 7 k=0 base=7
+0208  // [40] s=1 e= 8 k=1 base=8
+040A  // [41] s=1 e= 9 k=2 base=10
+040E  // [42] s=1 e=10 k=2 base=14
+0612  // [43] s=1 e=11 k=3 base=18
+061A  // [44] s=1 e=12 k=3 base=26
+0822  // [45] s=1 e=13 k=4 base=34
+0A32  // [46] s=1 e=14 k=5 base=50
+0A52  // [47] s=1 e=15 k=5 base=82
+0872  // [48] s=1 e=16 k=4 base=114
+0682  // [49] s=1 e=17 k=3 base=130
+108A  // [50] s=1 e=18 CLAMP(domain)
+108A  // [51] s=1 e=19 CLAMP(domain)
+108A  // [52] s=1 e=20 CLAMP(domain)
+108A  // [53] s=1 e=21 CLAMP(domain)
+108A  // [54] s=1 e=22 CLAMP(domain)
+108A  // [55] s=1 e=23 CLAMP(domain)
+108A  // [56] s=1 e=24 CLAMP(domain)
+108A  // [57] s=1 e=25 CLAMP(domain)
+108A  // [58] s=1 e=26 CLAMP(domain)
+108A  // [59] s=1 e=27 CLAMP(domain)
+108A  // [60] s=1 e=28 CLAMP(domain)
+108A  // [61] s=1 e=29 CLAMP(domain)
+108A  // [62] s=1 e=30 CLAMP(domain)
+108A  // [63] s=1 e=31 CLAMP(domain)

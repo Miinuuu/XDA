@@ -55,6 +55,10 @@ static float fp16_to_float(uint16_t h) {
     return result;
 }
 
+static bool fp16_same_zero(uint16_t a, uint16_t b) {
+    return ((a & 0x7FFF) == 0) && ((b & 0x7FFF) == 0);
+}
+
 // Load hex values from .mem file (one hex value per line, // comments)
 static std::vector<uint16_t> load_mem_file(const std::string& filename) {
     std::vector<uint16_t> data;
@@ -255,15 +259,18 @@ int main(int argc, char* argv[]) {
         float y_hw = fp16_to_float(hw_out);
         float y_exp = fp16_to_float(expected);
 
-        // ULP distance
-        int16_t ulp = (int16_t)hw_out - (int16_t)expected;
+        bool zero_equivalent = fp16_same_zero(hw_out, expected);
+        bool accepted_match = (hw_out == expected) || zero_equivalent;
+
+        // ULP distance (+0 and -0 are the same FP16 value)
+        int16_t ulp = zero_equivalent ? 0 : (int16_t)hw_out - (int16_t)expected;
         int abs_ulp = (ulp < 0) ? -ulp : ulp;
         if (abs_ulp > max_ulp) max_ulp = abs_ulp;
         if (abs_ulp > 4) ulp_errors++;
 
         float abs_err = fabsf(y_hw - y_exp);
         if (abs_err > max_abs_err) max_abs_err = abs_err;
-        if (hw_out != expected) errors++;
+        if (!accepted_match) errors++;
 
         // Print first 10, middle, last 5, and limited errors
         bool is_err = (abs_ulp > 4);
@@ -271,7 +278,7 @@ int main(int argc, char* argv[]) {
             if (is_err) printed_errors++;
             printf("  [%5zu] x=%8.4f  hw=0x%04X(%8.6f)  exp=0x%04X(%8.6f)  ulp=%d %s\n",
                    i, x_f, hw_out, y_hw, expected, y_exp, ulp,
-                   is_err ? "FAIL" : (hw_out == expected) ? "EXACT" : "ok");
+                   is_err ? "FAIL" : (hw_out == expected) ? "EXACT" : zero_equivalent ? "ZERO_EQ" : "ok");
         }
     }
 
@@ -280,7 +287,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "\n--- Summary [" << func_name << "] ---" << std::endl;
     printf("Test vectors: %zu (%zu AXI beats)\n", data_size, axi_beats);
-    printf("Bit-exact matches: %zu/%zu (%.2f%%)\n",
+    printf("Accepted matches: %zu/%zu (%.2f%%)\n",
            data_size - errors, data_size, 100.0 * (data_size - errors) / data_size);
     std::cout << "Max ULP distance: " << max_ulp << std::endl;
     std::cout << "ULP errors (>4): " << ulp_errors << std::endl;
