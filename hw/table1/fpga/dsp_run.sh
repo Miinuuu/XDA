@@ -36,7 +36,7 @@ TCLEOF
     echo "[$(date +%H:%M:%S)] done  $NAME"
 }
 
-run_design eda_dsp     eda_nli_engine_4s "$SRC/eda_nli_engine_4s.v $SRC/fp_adder.v" ""
+run_design eda_dsp     eda_nli_engine_4s "$SRC/eda_nli_engine_4s.v $SRC/fp_adder.v" "GRADUAL_UNDERFLOW=0"
 run_design nli_dsp     nli_engine        "$SRC/nli_engine.v $SRC/fp_mult_norm.v $SRC/fp_adder.v" ""
 run_design nnlut16_dsp nn_lut_engine     "$SRC/nn_lut_engine.v $SRC/fp_mult_norm.v $SRC/fp_adder.v" ""
 

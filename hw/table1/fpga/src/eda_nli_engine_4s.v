@@ -21,7 +21,7 @@
 module eda_nli_engine_4s #(
     parameter T_BITS    = 10,
     parameter LUT_DEPTH = 256,
-    parameter GRADUAL_UNDERFLOW = 1
+    parameter GRADUAL_UNDERFLOW = 0
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -328,8 +328,8 @@ module eda_nli_engine_4s #(
     wire [MANT_WIDTH-1:0]       final_mant = round_overflow ? rounded_mant[MANT_WIDTH:1] :
                                                                rounded_mant[MANT_WIDTH-1:0];
 
-    // Gradual underflow is the default; set GRADUAL_UNDERFLOW=0 for FTZ
-    // sensitivity checks.
+    // Table 1 resource builds use the submitted FTZ default; set
+    // GRADUAL_UNDERFLOW=1 for subnormal accuracy sensitivity checks.
     wire [EXP_WIDTH+2:0] sub_shift = FRAC_START + 1 - final_exp;
     wire [WORK_WIDTH-1:0] sub_quot =
         (sub_shift >= WORK_WIDTH) ? {WORK_WIDTH{1'b0}} : (norm_mant >> sub_shift);
