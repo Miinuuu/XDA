@@ -4,10 +4,6 @@ This directory contains the complete, self-contained flows that produce every
 number in Table 1: XDA, NLI, and NN-LUT on (A) DSP-free FPGA and (B)
 SRAM-backed ASIC. All RTL is plain Verilog, including the XDA engine
 (`fpga/src/eda_nli_engine_4s.v`, `asic/src/eda_nli_engine_4s_sram.v`).
-These resource flows default XDA to FTZ underflow mode
-(`GRADUAL_UNDERFLOW=0`, `--hw-mode ftz`) to match the submitted Table 1
-hardware resource point. The U200 run/hw_emu flow and Table 3 accuracy checks
-use the subnormal bit-exact model by default.
 
 ```
 fpga/

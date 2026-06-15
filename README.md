@@ -90,12 +90,6 @@ heavy-tailed draws — the widest one (Llama RMSNorm NLI max, printed 84.4) has
 a measured rerun spread of 101 ± 8, so expect values near 100 there. No
 comparison is affected in either direction.
 
-**FP16 underflow mode.** Accuracy evaluation and the U200 run/hw_emu flow
-preserve FP16 subnormal results by default
-(`--hw-mode ieee_subnormal`, `GRADUAL_UNDERFLOW=1`).  Table 1 resource flows
-use the submitted FTZ hardware point by default
-(`--hw-mode ftz`, `GRADUAL_UNDERFLOW=0`).
-
 **Table 2 (LLM quality, five models)** — one run per model × method:
 
 ```bash
@@ -192,7 +186,6 @@ cd hw/eda_u200/eda-nli-kernel/src/nli_engine
 make all              # Generate .mem + simulate (default: silu)
 make all FUNC=gelu    # Specify function
 make sim-all          # Test all 9 functions
-make sim-all-subnormal  # Compatibility alias for the default subnormal mode
 make sim-exhaustive   # Exhaustive FP16 verification
 ```
 
