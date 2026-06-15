@@ -161,7 +161,7 @@ python3 "$MEMGEN_DIR/gen_nli_mem_fp32.py" silu . && echo "  NLI-FP32 .mem OK"
 # EDA .mem → $OUTDIR/eda_mem
 mkdir -p "$OUTDIR/eda_mem"
 cd "$OUTDIR/eda_mem"
-python3 "$MEMGEN_DIR/gen_eda_mem.py" silu . && echo "  EDA .mem OK"
+python3 "$MEMGEN_DIR/gen_eda_mem.py" silu . --hw-mode ftz && echo "  EDA .mem OK"
 
 # NN-LUT-16 .mem → $OUTDIR/nnlut16_mem
 mkdir -p "$OUTDIR/nnlut16_mem"
@@ -189,7 +189,7 @@ run_design "nli" "nli_engine" \
 # ==============================================================================
 run_design "eda" "eda_nli_engine_4s" \
     "$SRC_DIR/eda_nli_engine_4s.v $SRC_DIR/fp_adder.v" \
-    "" \
+    "GRADUAL_UNDERFLOW=0" \
     "$SCRIPT_DIR/tb_eda_power.sv" "tb_eda_nli_engine" \
     "tb_eda_nli_engine/u_dut" \
     "$OUTDIR/eda_mem" \

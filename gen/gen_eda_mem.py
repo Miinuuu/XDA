@@ -527,7 +527,7 @@ if __name__ == '__main__':
     parser.add_argument('--output-dir', default=None, help='Output directory')
     parser.add_argument('--hw-mode', choices=SUPPORTED_HW_MODES,
                         default=HW_MODE_IEEE_SUBNORMAL,
-                        help='FP16 underflow mode: ieee_subnormal matches the default EDA RTL; '
+                        help='FP16 underflow mode: ieee_subnormal matches the accuracy/U200 RTL default; '
                              'ftz is retained for sensitivity checks')
     args = parser.parse_args()
 

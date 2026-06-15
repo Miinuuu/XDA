@@ -48,7 +48,7 @@ mem:
 	mkdir -p $(OUTDIR)/nli_full_fp32_mem && cd $(OUTDIR)/nli_full_fp32_mem && \
 		python3 $(MEMGEN_DIR)/gen_nli_mem_fp32.py silu .
 	mkdir -p $(OUTDIR)/eda_mem && cd $(OUTDIR)/eda_mem && \
-		python3 $(MEMGEN_DIR)/gen_eda_mem.py silu .
+		python3 $(MEMGEN_DIR)/gen_eda_mem.py silu . --hw-mode ftz
 	mkdir -p $(OUTDIR)/nnlut16_mem && cd $(OUTDIR)/nnlut16_mem && \
 		python3 $(MEMGEN_DIR)/gen_nn_lut_mem.py --func silu --outdir .
 	mkdir -p $(OUTDIR)/nnlut256_mem
@@ -123,7 +123,7 @@ eda: check-vivado mem
 	@echo "=== EDA: synth + impl ==="
 	$(SCRIPT_DIR)run_one.sh eda eda_nli_engine_4s \
 		"$(SRC_DIR)/eda_nli_engine_4s.v $(SRC_DIR)/fp_adder.v" \
-		"" \
+		"GRADUAL_UNDERFLOW=0" \
 		$(SCRIPT_DIR)tb_eda_power.sv tb_eda_nli_engine \
 		tb_eda_nli_engine/u_dut \
 		$(OUTDIR)/eda_mem \
