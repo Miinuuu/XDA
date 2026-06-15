@@ -36,7 +36,6 @@ os.environ["HF_ALLOW_CODE_EVAL"] = "1"
 from nli_engine import nli_forward, build_lut_from_paper, build_lut
 from nli_eda_engine import eda_forward
 from nn_lut_engine import nn_lut_forward
-from flex_sfu_engine import flex_sfu_forward
 
 SW_LLM_RESULTS_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'llm_results')
@@ -251,98 +250,6 @@ def patch_model_nn_lut(model, n_segments=16):
     for label, count in [('RMSNorm', n_rms), ('Activations', n_act), ('Softmax', n_softmax)]:
         if count == 0:
             raise RuntimeError(f"patch_model_nn_lut: 0 {label} patched")
-    return n_rms, n_act, n_softmax
-
-# ─────────────────────────────────────────────────────────────
-#  Flex-SFU patching
-# ─────────────────────────────────────────────────────────────
-
-def flex_sfu_activation(x, func_name, n_segments=64):
-    return flex_sfu_forward(x, func_name, n_segments=n_segments)
-
-def flex_sfu_softmax(x, dim=None, dtype=None, n_segments=64):
-    if dim is None:
-        dim = -1
-    x_max = x.max(dim=dim, keepdim=True).values
-    x_shifted = x - x_max
-
-    numel = x_shifted.numel()
-    CHUNK_THRESH = 2 * 1024 * 1024
-    if numel > CHUNK_THRESH and x_shifted.dim() >= 2:
-        chunks = x_shifted.shape[0]
-        exp_parts = []
-        for c in x_shifted.chunk(max(1, chunks), dim=0):
-            exp_parts.append(flex_sfu_forward(c, 'exp', n_segments=n_segments))
-        exp_x = torch.cat(exp_parts, dim=0)
-    else:
-        exp_x = flex_sfu_forward(x_shifted, 'exp', n_segments=n_segments)
-
-    exp_sum = exp_x.sum(dim=dim, keepdim=True)
-    res = exp_x * flex_sfu_forward(exp_sum, 'reciprocal', n_segments=n_segments)
-    if dtype is not None:
-        res = res.to(dtype)
-    return res
-
-def patch_model_flex_sfu(model, n_segments=64):
-    """Patch model with Flex-SFU approximations."""
-    n_rms = n_act = n_softmax = 0
-    for name, module in model.named_modules():
-        module_type = type(module).__name__
-        if 'RMSNorm' in module_type:
-            def make_rmsnorm_fwd(orig_module):
-                def fwd(hidden_states):
-                    input_dtype = hidden_states.dtype
-                    hidden_states = hidden_states.to(torch.float32)
-                    variance = hidden_states.pow(2).mean(-1, keepdim=True)
-                    inv_rms = flex_sfu_activation(variance + orig_module.variance_epsilon, 'rsqrt', n_segments=n_segments)
-                    hidden_states = hidden_states * inv_rms
-                    return (orig_module.weight * hidden_states).to(input_dtype)
-                return fwd
-            module.forward = make_rmsnorm_fwd(module)
-            n_rms += 1
-        if hasattr(module, 'act_fn') and type(module.act_fn) in ACTIVATION_MAP:
-            func_name = ACTIVATION_MAP[type(module.act_fn)]
-            class FlexSFUAct(nn.Module):
-                def __init__(self, fn):
-                    super().__init__()
-                    self.fn = fn
-                def forward(self, x):
-                    return flex_sfu_activation(x, self.fn, n_segments=n_segments)
-            module.act_fn = FlexSFUAct(func_name)
-            n_act += 1
-        if 'Attention' in module_type:
-            orig_forward = module.forward
-            def make_attn_fwd(orig_module, orig_fwd):
-                import sys
-                try:
-                    module_ns = sys.modules[orig_module.__module__]
-                except KeyError:
-                    module_ns = None
-                def attn_fwd(*args, **kwargs):
-                    if module_ns and hasattr(module_ns, 'nn') and hasattr(module_ns.nn, 'functional'):
-                        orig_sm = module_ns.nn.functional.softmax
-                        def custom_sm(input, dim=None, _stacklevel=3, dtype=None):
-                            return flex_sfu_softmax(input, dim=dim, dtype=dtype, n_segments=n_segments)
-                        module_ns.nn.functional.softmax = custom_sm
-                        try:
-                            return orig_fwd(*args, **kwargs)
-                        finally:
-                            module_ns.nn.functional.softmax = orig_sm
-                    else:
-                        orig_sm = F.softmax
-                        def custom_sm(input, dim=None, _stacklevel=3, dtype=None):
-                            return flex_sfu_softmax(input, dim=dim, dtype=dtype, n_segments=n_segments)
-                        F.softmax = custom_sm
-                        try:
-                            return orig_fwd(*args, **kwargs)
-                        finally:
-                            F.softmax = orig_sm
-                return attn_fwd
-            module.forward = make_attn_fwd(module, orig_forward)
-            n_softmax += 1
-    for label, count in [('RMSNorm', n_rms), ('Activations', n_act), ('Softmax', n_softmax)]:
-        if count == 0:
-            raise RuntimeError(f"patch_model_flex_sfu: 0 {label} patched")
     return n_rms, n_act, n_softmax
 
 def patch_model_eda(model, max_lut=256, max_k=5, t_bits=None):
@@ -774,11 +681,6 @@ def run_table1_eval(
             print(f"  [2] Applying NN-LUT patches (256-segment, equal budget)...")
             n_rms, n_act, n_soft = patch_model_nn_lut(hf_model, n_segments=256)
             print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts")
-        elif config == 'flex_sfu':
-            print(f"  [2] Applying Flex-SFU patches (256-segment adaptive PWL)...")
-            n_rms, n_act, n_soft = patch_model_flex_sfu(hf_model, n_segments=256)
-            print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts")
-
         # ── Wikitext-2 Perplexity ──
         if 'ppl' in done:
             ppl = result['wikitext2_ppl']

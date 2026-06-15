@@ -46,7 +46,6 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 │   ├── nli_engine.py            # NLI baseline: LUT build + FP16/FP32 forward variants
 │   ├── run_all_experiments.py   # Regenerates paper Table 3 (Parts A and B)
 │   ├── llm_eval.py              # LLM quality eval (paper Table 2): patched models + lm-eval + PPL
-│   ├── flex_sfu_engine.py       # Flex-SFU reference: SGD-optimized PWL baseline
 │   ├── subnormal_hitrate.py     # rsqrt-input subnormal profiling (paper Sec. 4.4)
 │   └── eda_results/             # Bundled inputs: optimal_domains.json, activation stats
 │
