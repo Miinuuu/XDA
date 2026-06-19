@@ -133,8 +133,17 @@ except ImportError:
 #  EDA-NLI patching
 # ─────────────────────────────────────────────────────────────
 
+_EDA_OPTS = {'e0_exact': False}  # rebuttal D-Q4 ablation: bypass FP16-subnormal (e=0) rsqrt to exact
+
 def eda_activation(x, func_name, max_lut=256, max_k=5, t_bits=None):
-    return eda_forward(x, func_name, max_lut=max_lut, max_k=max_k, t_bits=t_bits)
+    y = eda_forward(x, func_name, max_lut=max_lut, max_k=max_k, t_bits=t_bits)
+    if _EDA_OPTS['e0_exact'] and func_name == 'rsqrt':
+        xf = x.float()
+        ax = xf.abs().half().float()  # FP16-rounded magnitude
+        sub = (ax > 0) & (ax < 6.103515625e-05)  # FP16 subnormal: 0 < |x| < 2^-14 (smallest normal)
+        if sub.any():
+            y = torch.where(sub, torch.rsqrt(xf).half().to(y.dtype), y)
+    return y
 
 def eda_softmax(x, dim=None, dtype=None, max_lut=256, max_k=5, t_bits=None):
     if dim is None:
@@ -619,9 +628,11 @@ def run_table1_eval(
         configs.append('nn_lut')
     if mode in ('nn_lut_256', 'all'):
         configs.append('nn_lut_256')
+    if mode == 'nli_eda_e0exact':
+        configs.append('nli_eda_e0exact')
 
     all_results = {}
-    all_tasks = ACCURACY_TASKS + ZEROSHOT_TASKS
+    all_tasks = ZEROSHOT_TASKS if os.environ.get('EDA_ZEROSHOT_ONLY') else (ACCURACY_TASKS + ZEROSHOT_TASKS)
 
     for config in configs:
         cfg_path = _config_path(save_dir, model_name, config)
@@ -673,6 +684,11 @@ def run_table1_eval(
             print(f"  [2] Applying EDA-NLI patches (Exponent-Direct Addressing)...")
             n_rms, n_act, n_soft = patch_model_eda(hf_model, t_bits=t_bits)
             print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts (t_bits={t_bits})")
+        elif config == 'nli_eda_e0exact':
+            print(f"  [2] Applying EDA-NLI patches + e=0 (FP16-subnormal) rsqrt exact bypass...")
+            _EDA_OPTS['e0_exact'] = True
+            n_rms, n_act, n_soft = patch_model_eda(hf_model, t_bits=t_bits)
+            print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts (t_bits={t_bits}, e0_exact)")
         elif config == 'nn_lut':
             print(f"  [2] Applying NN-LUT patches (16-segment, paper default)...")
             n_rms, n_act, n_soft = patch_model_nn_lut(hf_model, n_segments=16)
@@ -682,7 +698,9 @@ def run_table1_eval(
             n_rms, n_act, n_soft = patch_model_nn_lut(hf_model, n_segments=256)
             print(f"      Patched: {n_rms} RMSNorm, {n_act} Activations, {n_soft} Softmax intercepts")
         # ── Wikitext-2 Perplexity ──
-        if 'ppl' in done:
+        if os.environ.get('EDA_ZEROSHOT_ONLY'):
+            print(f"\n  [3] PPL skipped (EDA_ZEROSHOT_ONLY)")
+        elif 'ppl' in done:
             ppl = result['wikitext2_ppl']
             print(f"\n  [3] PPL already done = {ppl:.2f}")
         else:
@@ -703,6 +721,8 @@ def run_table1_eval(
         )
 
         from tqdm import tqdm
+        _lv = os.environ.get('EDA_LIMIT')
+        _eda_limit = (float(_lv) if '.' in _lv else int(_lv)) if _lv else None  # docs/task subset for fast ablation
         pending = [t for t in all_tasks if t not in done]
         if pending:
             pbar = tqdm(pending, desc="    Accuracy Tasks")
@@ -711,6 +731,7 @@ def run_table1_eval(
                     model=lm,
                     tasks=[task],
                     batch_size=batch_size,
+                    limit=_eda_limit,
                     log_samples=False,
                     confirm_run_unsafe_code=True,
                 )
@@ -792,7 +813,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default='nli_eda',
                         choices=[
                             'baseline', 'nli', 'nli_addr_fp32', 'nli_full_fp32',
-                            'nli_eda', 'nn_lut', 'nn_lut_256', 'both', 'all'
+                            'nli_eda', 'nli_eda_e0exact', 'nn_lut', 'nn_lut_256', 'both', 'all'
                         ])
     parser.add_argument('--device', type=str, default='cuda:0')
     parser.add_argument('--dtype', type=str, default='auto',
