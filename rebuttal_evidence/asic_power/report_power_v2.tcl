@@ -16,6 +16,12 @@ read_liberty $libdir/fakeram45_64x15.lib
 read_db $base/6_final.odb
 read_spef $base/6_final.spef
 read_sdc $base/6_final.sdc
+# Enforce the common 10 ns signoff clock for an ISO-FREQUENCY cross-design power
+# comparison. Dynamic power scales with f, so if a build dir's 6_final.sdc was written
+# by a different (e.g. Fmax-tight) synthesis run, reading it verbatim would distort the
+# XDA-vs-NLI delta. This override is a no-op when the design was built with the shipped
+# 10 ns shared constraint.sdc, and corrects a stale/overridden build SDC otherwise.
+create_clock -name core_clock -period 10.0 [get_ports clk]
 
 if {$mode == "uniform"} {
     set_power_activity -global -activity 0.2 -duty 0.5

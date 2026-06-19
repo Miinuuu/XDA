@@ -21,7 +21,7 @@ asic/
 ├── configs/<design>/   # per-design ORFS config.mk (relative paths)
 ├── src/                # SRAM-macro RTL variants + fakeram behavioral models
 ├── fakeram/            # fakeram45_256x16 / 64x15 .lib/.lef
-└── power/              # vectorless post-route power estimate (OpenSTA)
+└── power/              # post-route power, vectorless cross-check (OpenSTA); §1 reported number = measured VCD, see rebuttal_evidence/asic_power/vcd_work/
 ```
 
 ## FPGA (Table 1A)
@@ -62,7 +62,9 @@ Logic / SRAM-macro / total area and Fmax come from each design's
 the 10 ns signoff clock for all designs.
 
 Vectorless post-route power estimate (uniform-activity, identical assumptions
-per design):
+per design) — the **cross-check**; the §1 *reported* power is the measured
+gate-level-sim VCD under `rebuttal_evidence/asic_power/vcd_work/`
+(`run_vcd_power.sh`):
 
 ```bash
 cd asic/power
