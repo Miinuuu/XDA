@@ -1,0 +1,10 @@
+# vcd_work packaging for the mirror:
+#  SHIP   = reproduce inputs/scripts (run_vcd_power.sh, report_power_vcd.tcl, tb_*_vcd.v,
+#           nangate_cells.v, fakeram45_*.v, *.mem, *_6_final.v) + the cited result logs.
+#  REBUILD (not shipped) = large regeneratable intermediates produced by run_vcd_power.sh.
+*.vcd
+*.vvp
+*.sdf
+# Re-include the cited measured-power result logs (overrides the repo-root "*.log" rule).
+!pwr_eda_nli_engine_4s_vcd.log
+!pwr_nli_engine_vcd.log
