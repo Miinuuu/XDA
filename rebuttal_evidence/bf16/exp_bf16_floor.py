@@ -1,8 +1,8 @@
 """BF16 accuracy vs the BF16 quantization floor (rebuttal §3).
-Fair reference: a BF16 nonlinear unit's output cannot beat BF16 round-to-nearest.
+Fair reference: a BF16 nonlinear unit's output cannot beat BF16 nearest-even rounding.
 We measure XDA-BF16's mean relative error (LUT entries + output rounded to BF16)
 against that floor, per function, at the 512-entry budget. Result: XDA-BF16 is
-within 1.5-3.2x of the floor across all 9 functions -> near BF16-optimal.
+within 1.5-3.2x of the floor across all 9 functions (a small constant factor above the BF16 floor).
 Reproduce: PYTHONPATH=<research_root> python exp_bf16_floor.py
 """
 import torch, numpy as np, sys, os
