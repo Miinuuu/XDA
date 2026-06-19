@@ -1,8 +1,8 @@
 # Post-Route ASIC Power Estimate (for ICCAD'26 Rebuttal)
 
 > **Note (2026-06-19):** Reviewers A-Q3/B-Q2 asked for a *switching-based* ASIC power
-> estimate; the paper had omitted ASIC power for lack of a switching-activity model. The
-> rebuttal body therefore reports the **measured gate-level-simulation VCD** estimate (NLI
+> estimate; the paper had omitted ASIC power because no post-route ASIC activity trace had been generated before submission. The
+> rebuttal body therefore reports the **gate-level-sim SAIF-annotated estimate** (NLI
 > 2.23 / XDA 1.52 mW, **−32%**; see "VCD-annotated" section below) as the answer. The
 > vectorless uniform-α model in Method/Results is retained here as an **assumption-free
 > cross-check** (−33%, agreeing), not as the headline.
