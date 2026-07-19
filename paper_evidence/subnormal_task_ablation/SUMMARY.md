@@ -1,7 +1,8 @@
-# Subnormal rsqrt Task-Level Isolation (ICCAD'26 Rebuttal, D-Q4)
+# Subnormal rsqrt Task-Level Isolation
 
-**Question (Reviewer D-Q4):** task-level accuracy impact of XDA's large worst-case rsqrt
-error in the FP16 subnormal (e=0) range.
+This experiment isolates the task-level accuracy impact of XDA's large
+worst-case rsqrt error in the FP16 subnormal (`e=0`) range. It supports the
+analysis in paper Sec. 4.4.
 
 ## Method — single-variable isolation
 Two arms differ in **exactly one thing**: how the RMSNorm rsqrt handles FP16-subnormal
@@ -39,7 +40,7 @@ lambada_openai, winogrande), lm-eval-harness, 500 examples/task, seed 42, batch 
   random perturbation that flips a few borderline predictions, not systematic degradation.
 
 **Conclusion:** isolating the 3,472 subnormal rsqrt calls changes the 8-task average by only
-0.13 pp -> operationally negligible (rebuttal Sec. 6(iii)).
+0.13 pp -> operationally negligible (paper Sec. 4.4).
 
 ## Files
 - `nli_eda_e0exact_cuda0.json` — treatment (e=0 bypassed), cuda:0

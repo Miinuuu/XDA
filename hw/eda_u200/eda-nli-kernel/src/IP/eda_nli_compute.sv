@@ -1,7 +1,8 @@
 // ==============================================================
 // eda_nli_compute - Compute Pipeline for EDA-NLI Kernel
 //
-// PISO (512b → 32×16b) → eda_nli_engine_4s → SIPO (32×16b → 512b)
+// PISO serializes each 512b beat into 32 FP16 values (one per cycle), then a
+// single eda_nli_engine_4s processes them and the SIPO repacks 32 results.
 // → Output FIFO (2-deep) → m_tvalid/m_tdata
 //
 // S_IDLE → S_COMPUTE → S_PUSH → S_IDLE

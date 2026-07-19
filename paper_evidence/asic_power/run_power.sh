@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reproduces the shipped pwr_<design>_uniform.log files (rebuttal Sec. 1).
+# Reproduces the shipped pwr_<design>_uniform.log files (paper Sec. 4.2).
 #
 # Prerequisite: build the three ASIC designs post-route with the flow under
 # hw/table1/asic/ in an OpenROAD-flow-scripts checkout ($ORFS), so that

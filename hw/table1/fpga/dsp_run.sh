@@ -1,5 +1,5 @@
 #!/bin/bash
-# DSP-enabled FPGA synthesis for ICCAD'26 rebuttal (Reviewer B, Q1).
+# DSP-enabled FPGA synthesis for the comparison reported in paper Sec. 4.2.
 # Identical flow to run_one.sh step [1/4] except `-max_dsp 0` is removed,
 # so Vivado may infer DSP48 slices. Same part, same clock.xdc, same
 # -flatten_hierarchy rebuilt. Reports util + timing only (no SAIF power).

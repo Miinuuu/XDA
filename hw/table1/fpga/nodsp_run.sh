@@ -1,6 +1,6 @@
 #!/bin/bash
 # DSP-FREE rerun under the same Vivado version (2024.2) as the DSP-enabled runs,
-# so the rebuttal's DSP-on/off comparison is single-tool-version end to end.
+# so the paper's DSP-on/off comparison is single-tool-version end to end.
 set -e
 # Prerequisite: source <Vivado>/settings64.sh first
 command -v vivado >/dev/null || { echo "ERROR: vivado not in PATH"; exit 1; }

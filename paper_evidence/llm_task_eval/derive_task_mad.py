@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Re-derive the rebuttal Sec. 6(iv) task-level numbers from results/table1_*.json.
+"""Re-derive the paper Sec. 4.3 task-level numbers from results/table1_*.json.
 
 The JSONs under results/ are the canonical lm-eval outputs behind the paper's
 Table 2 (five models x {baseline, XDA (internal name nli_eda), NLI, NN-LUT16,
 NN-LUT256}; produced by sw/llm_eval.py). From the shipped files alone this
-script reproduces the numbers cited in the rebuttal (Sec. 6(iv)) and printed
-in the paper (abstract, Sec. 4.4):
+script reproduces the numbers printed in the paper (abstract and Sec. 4.3):
 
   XDA : 0.30 pp mean absolute deviation vs. the FP16 baseline over the
         40 zero-shot task-model pairs; largest single deviation 1.66 pp

@@ -3,7 +3,7 @@
 //
 // Architecture:
 //   m00_axi (read only)  → EDA_axi_read_master → AXI-Stream
-//   AXI-Stream → eda_nli_compute (PISO→NLI engine→SIPO) → AXI-Stream
+//   AXI-Stream → eda_nli_compute (PISO→single NLI engine→SIPO) → AXI-Stream
 //   AXI-Stream → axi_write_master → m01_axi (write only)
 // ==============================================================
 `default_nettype none

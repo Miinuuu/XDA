@@ -1,13 +1,16 @@
-"""BF16 accuracy vs the BF16 quantization floor (rebuttal §3).
+"""BF16 accuracy vs the BF16 quantization floor (paper Sec. 3.1).
 Fair reference: a BF16 nonlinear unit's output cannot beat BF16 nearest-even rounding.
 We measure XDA-BF16's mean relative error (LUT entries + output rounded to BF16)
 against that floor, per function, at the 512-entry budget. Result: XDA-BF16 is
 within 1.5-3.2x of the floor across all 9 functions (a small constant factor above the BF16 floor).
-Reproduce: PYTHONPATH=<research_root> python exp_bf16_floor.py
+Reproduce: python paper_evidence/bf16/exp_bf16_floor.py
 """
 import torch, numpy as np, sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # for exp_bf16_preliminary; XDA.eda.nli_eda resolved via PYTHONPATH=<research_root>
-from XDA.eda.nli_eda import get_function, get_domain
+HERE = os.path.dirname(os.path.abspath(__file__))
+SW_DIR = os.path.abspath(os.path.join(HERE, '..', '..', 'sw'))
+sys.path.insert(0, HERE)
+sys.path.insert(0, SW_DIR)
+from nli_eda import get_function, get_domain
 from exp_bf16_preliminary import get_bf16_exponent_bins, optimize_bf16
 dev='cuda' if torch.cuda.is_available() else 'cpu'; TAU=2.0**-14
 def b16(t): return t.to(torch.bfloat16).to(torch.float32)
