@@ -22,5 +22,4 @@ if {[file exists "${xoname}"]} {
     file delete -force "${xoname}"
 }
 
-#package_xo -xo_path ${xoname} -kernel_name EDA -ip_directory ./packaged_kernel_${suffix} -kernel_xml ./src/xml/kernel.xml -kernel_files ./src/c-model/EDA.cpp
-package_xo -xo_path ${xoname} -kernel_name EDA -ip_directory ./packaged_kernel_${suffix} -kernel_xml ./src/xml/user.xml -kernel_files ./src/c-model/EDA.cpp
+package_xo -xo_path ${xoname} -kernel_name EDA -ip_directory ./packaged_kernel_${suffix} -kernel_xml ./src/xml/user.xml

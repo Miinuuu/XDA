@@ -64,7 +64,6 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
         ├── src/IP/              # Kernel RTL (wrappers)
         ├── src/nli_engine/      # Standalone engine RTL + testbench
         ├── src/host/            # Host application (C++)
-        ├── src/c-model/         # C reference model
         ├── config/              # LUT config & test vectors (.mem)
         └── Makefile
 ```
