@@ -37,7 +37,7 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 
 ```
 ├── run_pipeline.sh              # Full pipeline automation script
-├── rebuttal_evidence/           # Pre-generated outputs backing the rebuttal's new numbers (see its README.md)
+├── paper_evidence/              # Pre-generated outputs backing camera-ready paper results
 ├── sw/                          # Python software
 │   ├── nli_eda.py               # XDA core: knapsack DP optimization & evaluation
 │   ├── nli_eda_engine.py        # PyTorch forward-pass simulator (3/4-stage)
@@ -106,8 +106,8 @@ done
 (exp + reciprocal), and RMSNorm (rsqrt) via PyTorch hooks and evaluates
 MMLU (5-shot), HumanEval, eight zero-shot tasks, and Wikitext-2 perplexity.
 The canonical outputs behind the printed Table 2 ship under
-`rebuttal_evidence/llm_task_eval/results/`, and
-`rebuttal_evidence/llm_task_eval/derive_task_mad.py` re-derives the paper's
+`paper_evidence/llm_task_eval/results/`, and
+`paper_evidence/llm_task_eval/derive_task_mad.py` re-derives the paper's
 0.30/0.36 pp task-level deviations from them alone. `sw/subnormal_hitrate.py`
 reproduces the Sec. 4.4 rsqrt-input subnormal profiling (four models, 100
 Wikitext-2 samples); a rerun log ships in the same directory. The meta-llama
@@ -118,11 +118,19 @@ and NN-LUT, including DSP-enabled variants: see [`hw/table1/README.md`](hw/table
 
 ## Requirements
 
-- **SW**: Python 3, PyTorch, NumPy; Table 2 additionally needs
+- **SW**: Python 3, PyTorch, NumPy (`pip install -r requirements.txt`); Table 2 additionally needs
   `transformers`, `datasets`, and `lm-eval` (EleutherAI harness), plus GPU(s)
-  with enough memory for the largest models (Llama-3.1-8B, Qwen3-30B-A3B)
+  with enough memory for the largest models (Llama-3.1-8B, Qwen3-30B-A3B).
+  Install those optional dependencies with `pip install -r requirements-llm.txt`.
 - **RTL Simulation**: Vivado (xvlog/xelab/xsim)
 - **FPGA Build & Run**: Vitis 2021.1+, Xilinx U200 platform (`xilinx_u200_gen3x16_xdma_2_202110_1`)
+
+## Baseline Implementations
+
+The NLI and NN-LUT software/RTL in this repository are paper-based
+reimplementations used for the comparisons in Tables 1--3; they are not copied
+upstream repositories. The AMD/Xilinx example-derived files retain their
+original copyright and SPDX license headers.
 
 ## Quick Start
 
@@ -206,21 +214,25 @@ make run_all TARGET=hw
 
 ## Hardware Architecture
 
-32 parallel XDA engines on a 512-bit AXI datapath (32 FP16 elements/cycle):
+The U200 validation harness uses a **single** XDA engine behind 512-bit AXI
+read/write interfaces. Each AXI beat packs 32 FP16 values; a PISO feeds them
+to the engine one value per cycle, and a SIPO collects the 32 results before
+the output beat is written back. The 512-bit interface is a packing format,
+not a 32-engine parallel datapath.
 
 ```
-DDR ──[AXI Read Master]──> PISO (512b→32×16b)
-                               │
-                    ┌──────────┼──────────┐
-                    ▼          ▼          ▼
-              XDA Engine  XDA Engine ... XDA Engine  (×32)
-                    │          │          │
-                    └──────────┼──────────┘
-                               │
-                           SIPO (32×16b→512b) ──[AXI Write Master]──> DDR
+DDR ──[512b AXI read]──> PISO (32 FP16 values, serialized)
+                                  │ one FP16/cycle
+                                  ▼
+                         Single XDA Engine
+                                  │ one FP16 result/cycle
+                                  ▼
+                         SIPO (32 results packed)
+                                  │
+DDR <──[512b AXI write]─────────────────────────┘
 ```
 
-**4-Stage Pipeline (per engine):**
+**4-Stage Pipeline (single engine):**
 
 | Stage | Operation | FP Gates |
 |-------|-----------|----------|

@@ -21,7 +21,7 @@ asic/
 ├── configs/<design>/   # per-design ORFS config.mk (relative paths)
 ├── src/                # SRAM-macro RTL variants + fakeram behavioral models
 ├── fakeram/            # fakeram45_256x16 / 64x15 .lib/.lef
-└── power/              # post-route power, vectorless cross-check (OpenSTA); §1 reported number = measured VCD, see rebuttal_evidence/asic_power/vcd_work/
+└── power/              # post-route power, vectorless cross-check (OpenSTA); paper result = measured VCD, see paper_evidence/asic_power/vcd_work/
 ```
 
 ## FPGA (Table 1A)
@@ -41,7 +41,7 @@ Metric mapping:
 - Dynamic power / Energy-per-op — `*_power.rpt` (SAIF-annotated, ≥94% net match);
   Energy/op = dynamic power / Fmax
 
-DSP-enabled comparison (rebuttal): `./dsp_run.sh` runs the identical flow with
+DSP-enabled comparison: `./dsp_run.sh` runs the identical flow with
 only `-max_dsp 0` removed; `./nodsp_run.sh` is the DSP-free counterpart for a
 same-tool-version baseline.
 
@@ -62,8 +62,8 @@ Logic / SRAM-macro / total area and Fmax come from each design's
 the 10 ns signoff clock for all designs.
 
 Vectorless post-route power estimate (uniform-activity, identical assumptions
-per design) — the **cross-check**; the §1 *reported* power is the measured
-gate-level-sim VCD under `rebuttal_evidence/asic_power/vcd_work/`
+per design) — the **cross-check**; the paper's reported power is the measured
+gate-level-sim VCD under `paper_evidence/asic_power/vcd_work/`
 (`run_vcd_power.sh`):
 
 ```bash

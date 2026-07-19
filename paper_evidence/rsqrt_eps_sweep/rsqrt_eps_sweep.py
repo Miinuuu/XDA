@@ -1,5 +1,5 @@
 """
-Exhaustive, distribution-free rsqrt epsilon-sensitivity bound (ICCAD'26 rebuttal, B-Q4).
+Exhaustive, distribution-free rsqrt epsilon-sensitivity bound (paper Sec. 4.4).
 
 RMSNorm computes rsqrt(variance + eps), so the hardware input is lower-bounded
 by eps regardless of model family, dataset, or activation distribution.
@@ -10,13 +10,15 @@ XDA and the NLI baseline — a deterministic bound no input distribution can exc
 import sys, os
 import torch
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
+HERE = os.path.dirname(os.path.abspath(__file__))
+SW_DIR = os.path.abspath(os.path.join(HERE, '..', '..', 'sw'))
+sys.path.insert(0, SW_DIR)
 
-from XDA.eda.nli_eda import (optimize_eda, _generate_fp16_grid, get_function,
-                             EVAL_DOMAINS, TAU)
-from XDA.eda.ablation_sweep import eda_forward_with_config
-from XDA.eda.nli_dp import PAPER_CUTPOINTS
-from XDA.eda.nli_engine import build_lut, nli_forward
+from nli_eda import (optimize_eda, _generate_fp16_grid, get_function,
+                     EVAL_DOMAINS, TAU)
+from ablation_sweep import eda_forward_with_config
+from nli_dp import PAPER_CUTPOINTS
+from nli_engine import build_lut, nli_forward
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 fn = 'rsqrt'
@@ -60,8 +62,7 @@ import json
 # allocations can differ slightly across devices, so a non-CUDA run writes a
 # device-suffixed file instead of overwriting the canonical artifact.
 suffix = '' if DEVICE == 'cuda' else f'_{DEVICE}'
-out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                   f'rsqrt_eps_sweep_results{suffix}.json')
+out = os.path.join(HERE, f'rsqrt_eps_sweep_results{suffix}.json')
 json.dump([{'eps': e, 'n': n, 'xda_max': xm, 'nli_max': nm,
             'xda_mean': xa, 'nli_mean': na} for e, n, xm, nm, xa, na in rows],
           open(out, 'w'), indent=2)

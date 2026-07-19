@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Measured switching-based post-route ASIC power (rebuttal §1).
+# Measured switching-based post-route ASIC power (paper Sec. 4.2).
 # Flow: gate-level simulation (Icarus Verilog) of the post-route 6_final.v netlist with
 # the same FP16 domain-sweep stimulus as the FPGA SAIF run -> VCD -> OpenROAD report_power
 # with per-net activity from read_vcd, iso-frequency 10 ns. Produces pwr_<design>_vcd.log.

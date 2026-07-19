@@ -10,9 +10,12 @@ to show that the mechanism is directly applicable.
 import torch
 import numpy as np
 import sys, os, time
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+SW_DIR = os.path.abspath(os.path.join(HERE, '..', '..', 'sw'))
+sys.path.insert(0, SW_DIR)
 
-from XDA.eda.nli_eda import get_function, get_domain, EDAConfig, solve_knapsack_dp
+from nli_eda import (EDAConfig, get_domain, get_fp16_exponent_bins,
+                     get_function, solve_knapsack_dp)
 
 TAU = 2.0 ** (-14)
 
@@ -151,8 +154,6 @@ if __name__ == '__main__':
     print("BF16 Preliminary: Knapsack Allocation under BF16 Bin Structure")
     print("mantissa=7 bits, K_max=5 (T_min=2)")
     print("=" * 70)
-
-    from XDA.eda.nli_eda import get_fp16_exponent_bins
 
     print(f"\n{'Function':>12s} | {'FP16 bins':>9s} | {'BF16 bins':>9s} | {'min W':>5s}")
     print('-' * 45)

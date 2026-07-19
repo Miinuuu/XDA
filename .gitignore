@@ -31,6 +31,8 @@ user-xo/
 user-xclbin/
 xrt.run_summary
 *.backup.jou
+hw/eda_u200/eda-nli-kernel/host
+hw/eda_u200/eda-nli-kernel/emconfig.json
 
 # Simulation artifacts
 *.csv

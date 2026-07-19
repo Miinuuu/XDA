@@ -1,11 +1,9 @@
-# Post-Route ASIC Power Estimate (for ICCAD'26 Rebuttal)
+# Post-Route ASIC Power Estimate
 
-> **Note (2026-06-19):** Reviewers A-Q3/B-Q2 asked for a *switching-based* ASIC power
-> estimate; the paper had omitted ASIC power because no post-route ASIC activity trace had been generated before submission. The
-> rebuttal body therefore reports the **gate-level-sim VCD-annotated estimate** (NLI
-> 2.23 / XDA 1.52 mW, **−32%**; see "VCD-annotated" section below) as the answer. The
-> vectorless uniform-α model in Method/Results is retained here as an **assumption-free
-> cross-check** (−33%, agreeing), not as the headline.
+The camera-ready paper reports the **gate-level-simulation VCD-annotated
+estimate** (NLI 2.23 / XDA 1.52 mW, **-32%**; see the VCD-annotated section
+below). The vectorless uniform-alpha model is retained as an assumption-free
+cross-check (-33%, agreeing), not as the headline result.
 
 Date: 2026-06-11
 Tool: OpenROAD 26Q1 (OpenSTA 3.0) `report_power`
@@ -54,9 +52,9 @@ than wires, which would favor XDA further.
    for both designs, XDA's extra 64×15 config ROM adds +0.14 mW, far smaller than
    the -1.03 mW logic saving.
 
-## VCD-annotated (measured-activity) ASIC power — the estimate reported in §1 (added 2026-06-19)
+## VCD-annotated (measured-activity) ASIC power - paper Sec. 4.2
 
-Direct answer to the activity-model concern: power re-estimated with **per-net switching
+Power was estimated with **per-net switching
 activity measured from a gate-level simulation** of the post-route netlist (Icarus Verilog,
 post-route `6_final.v` + behavioral fakeram + Nangate45 functional cell models), driven by
 the same FP16 domain-sweep vectors as the FPGA SAIF run (207/206 vectors × 10 rounds),
@@ -80,7 +78,7 @@ conservative).
 - Zero-delay is conservative (no glitch power); SDF-annotated (glitch-inclusive) timing would
   raise NLI's combinational power more than XDA's → XDA *even more* favorable. Reported
   zero-delay as the conservative measured number.
-- **Saved result logs** (the §1 numbers): `vcd_work/pwr_eda_nli_engine_4s_vcd.log` (XDA total
+- **Saved result logs** (the paper values): `vcd_work/pwr_eda_nli_engine_4s_vcd.log` (XDA total
   1.52 mW), `vcd_work/pwr_nli_engine_vcd.log` (NLI total 2.23 mW).
 - **One-command reproduce:** `export ORFS=<OpenROAD-flow-scripts>; vcd_work/run_vcd_power.sh` —
   `iverilog` GL-sim of `6_final.v` + behavioral fakeram + Nangate functional `nangate_cells.v`
@@ -90,7 +88,7 @@ conservative).
 ## Reproduce
 
 ```bash
-cd results/hw/table1/asic/power
+cd paper_evidence/asic_power
 for d in nli_engine eda_nli_engine_4s nn_lut_engine_16; do
   PWR_DESIGN=$d PWR_MODE=uniform \
   $ORFS/tools/install/OpenROAD/bin/openroad -no_init -exit report_power_v2.tcl

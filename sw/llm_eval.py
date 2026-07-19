@@ -10,7 +10,7 @@ sliding-window PPL loop.
 
 Results are written to llm_results/ as table1_<model>_<mode>.json. The
 pre-generated outputs behind the paper's Table 2 ship under
-rebuttal_evidence/llm_task_eval/results/.
+paper_evidence/llm_task_eval/results/.
 
 Usage:
     python3 llm_eval.py --model Qwen/Qwen2.5-0.5B-Instruct --mode baseline
@@ -133,7 +133,7 @@ except ImportError:
 #  EDA-NLI patching
 # ─────────────────────────────────────────────────────────────
 
-_EDA_OPTS = {'e0_exact': False}  # rebuttal D-Q4 ablation: bypass FP16-subnormal (e=0) rsqrt to exact
+_EDA_OPTS = {'e0_exact': False}  # Paper Sec. 4.4 ablation: bypass FP16-subnormal (e=0) rsqrt to exact
 
 def eda_activation(x, func_name, max_lut=256, max_k=5, t_bits=None):
     y = eda_forward(x, func_name, max_lut=max_lut, max_k=max_k, t_bits=t_bits)
