@@ -178,7 +178,8 @@ def fp_mult_norm(a_bits: int, b_bits: int, hw_mode: str = HW_MODE_FTZ) -> int:
     rounded = trunc_mant + (1 if round_up else 0)
     ro = (rounded >> MANT_WIDTH) & 1
     final_exp = norm_exp + 1 if ro else norm_exp
-    final_mant = (rounded >> 1 if ro else rounded) & ((1 << MANT_WIDTH) - 1)
+    # A carry increments the exponent and leaves a zero fraction (1.000...).
+    final_mant = 0 if ro else rounded & ((1 << MANT_WIDTH) - 1)
 
     result_isNaN = a_isNaN or b_isNaN or ((a_isZero and b_isInf) or (a_isInf and b_isZero))
     result_isInf = ((a_isInf or b_isInf) and not result_isNaN) or (final_exp >= EXP_MAX and not result_isNaN)
@@ -188,7 +189,7 @@ def fp_mult_norm(a_bits: int, b_bits: int, hw_mode: str = HW_MODE_FTZ) -> int:
     if result_isNaN: return (0 << 15) | (EXP_MAX << 10) | 1
     elif result_isZero: return 0
     elif underflow:
-        return _pack_underflow(result_sign, norm_product, final_exp,
+        return _pack_underflow(result_sign, norm_product, norm_exp,
                                PROD_WIDTH - 1 - MANT_WIDTH,
                                hw_mode=hw_mode)
     elif result_isInf: return (result_sign << 15) | (EXP_MAX << 10)
