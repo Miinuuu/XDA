@@ -13,7 +13,8 @@
 module fp_mult_norm #(
   parameter EXP_WIDTH  = 8,
   parameter MANT_WIDTH = 23,
-  parameter BIAS       = 127
+  parameter BIAS       = 127,
+  parameter GRADUAL_UNDERFLOW = 0
 ) (
   input                      io_a_sign,
   input  [EXP_WIDTH-1:0]     io_a_exp,
@@ -119,8 +120,39 @@ module fp_mult_norm #(
   wire round_overflow = rounded_mant[MANT_WIDTH];
 
   wire signed [EXP_WIDTH+1:0] final_exp  = round_overflow ? norm_exp + 1 : norm_exp;
-  wire [MANT_WIDTH-1:0]       final_mant = round_overflow ? rounded_mant[MANT_WIDTH:1] :
+  wire [MANT_WIDTH-1:0]       final_mant = round_overflow ? {MANT_WIDTH{1'b0}} :
                                                              rounded_mant[MANT_WIDTH-1:0];
+
+  // Optional gradual-underflow path.  The default remains flush-to-zero;
+  // setting GRADUAL_UNDERFLOW=1 preserves and rounds subnormal results.
+  wire signed [EXP_WIDTH+1:0] sub_shift_signed = 1 - norm_exp;
+  reg [PROD_WIDTH-1:0] sub_shifted;
+  integer sub_i;
+  reg sub_lost_sticky;
+  always @(*) begin
+    sub_shifted = {PROD_WIDTH{1'b0}};
+    sub_lost_sticky = 1'b0;
+    if (GRADUAL_UNDERFLOW && !prod_zero &&
+        sub_shift_signed > 0 && sub_shift_signed < PROD_WIDTH) begin
+      sub_shifted = norm_product >> sub_shift_signed;
+      for (sub_i = 0; sub_i < PROD_WIDTH; sub_i = sub_i + 1) begin
+        if (sub_i < sub_shift_signed)
+          sub_lost_sticky = sub_lost_sticky | norm_product[sub_i];
+      end
+      sub_shifted[0] = sub_shifted[0] | sub_lost_sticky;
+    end
+  end
+
+  wire [MANT_WIDTH-1:0] sub_trunc_mant = sub_shifted[MANT_START:MANT_END];
+  wire sub_guard = (GUARD_POS >= 0) ? sub_shifted[GUARD_POS] : 1'b0;
+  wire sub_round_bit = (ROUND_POS >= 0) ? sub_shifted[ROUND_POS] : 1'b0;
+  wire sub_sticky = (ROUND_POS > 0) ? |sub_shifted[ROUND_POS-1:0] : 1'b0;
+  wire sub_lsb = sub_trunc_mant[0];
+  wire sub_round_up = sub_guard && (sub_round_bit || sub_sticky || sub_lsb);
+  wire [MANT_WIDTH:0] sub_rounded_mant =
+      {1'b0, sub_trunc_mant} + {{MANT_WIDTH{1'b0}}, sub_round_up};
+  wire sub_round_to_normal = sub_rounded_mant[MANT_WIDTH];
+  wire sub_is_zero = (sub_rounded_mant == {(MANT_WIDTH+1){1'b0}});
 
   //============================================================================
   // Special Cases
@@ -135,19 +167,28 @@ module fp_mult_norm #(
   //============================================================================
   // Output
   //============================================================================
-  assign io_out_isZero = result_isZero || underflow;
+  assign io_out_isZero = result_isZero ||
+                         (underflow && (!GRADUAL_UNDERFLOW || sub_is_zero));
   assign io_out_isInf  = result_isInf;
   assign io_out_isNaN  = result_isNaN;
 
   assign io_out_sign = result_isNaN ? 1'b0 : result_sign;
 
-  assign io_out_exp  = (result_isZero || underflow) ? {EXP_WIDTH{1'b0}} :
+  assign io_out_exp  = result_isZero ? {EXP_WIDTH{1'b0}} :
                        (result_isInf || result_isNaN) ? {EXP_WIDTH{1'b1}} :
+                       underflow ? (GRADUAL_UNDERFLOW && sub_round_to_normal ?
+                                    {{(EXP_WIDTH-1){1'b0}}, 1'b1} :
+                                    {EXP_WIDTH{1'b0}}) :
                        final_exp[EXP_WIDTH-1:0];
 
-  assign io_out_mant = (result_isZero || underflow) ? {MANT_WIDTH{1'b0}} :
+  assign io_out_mant = result_isZero ? {MANT_WIDTH{1'b0}} :
                        result_isInf ? {MANT_WIDTH{1'b0}} :
                        result_isNaN ? {{MANT_WIDTH-1{1'b0}}, 1'b1} :
+                       underflow ? (GRADUAL_UNDERFLOW && sub_round_to_normal ?
+                                    {MANT_WIDTH{1'b0}} :
+                                    GRADUAL_UNDERFLOW ?
+                                    sub_rounded_mant[MANT_WIDTH-1:0] :
+                                    {MANT_WIDTH{1'b0}}) :
                        final_mant;
 
 endmodule
