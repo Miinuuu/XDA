@@ -88,7 +88,7 @@ conservative).
 ## Reproduce
 
 ```bash
-cd paper_evidence/asic_power
+cd artifacts/asic_power
 for d in nli_engine eda_nli_engine_4s nn_lut_engine_16; do
   PWR_DESIGN=$d PWR_MODE=uniform \
   $ORFS/tools/install/OpenROAD/bin/openroad -no_init -exit report_power_v2.tcl

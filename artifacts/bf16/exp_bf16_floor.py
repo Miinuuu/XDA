@@ -3,7 +3,7 @@ Fair reference: a BF16 nonlinear unit's output cannot beat BF16 nearest-even rou
 We measure XDA-BF16's mean relative error (LUT entries + output rounded to BF16)
 against that floor, per function, at the 512-entry budget. Result: XDA-BF16 is
 within 1.5-3.2x of the floor across all 9 functions (a small constant factor above the BF16 floor).
-Reproduce: python paper_evidence/bf16/exp_bf16_floor.py
+Reproduce: python artifacts/bf16/exp_bf16_floor.py
 """
 import torch, numpy as np, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))

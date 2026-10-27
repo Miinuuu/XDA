@@ -10,7 +10,7 @@ sliding-window PPL loop.
 
 Results are written to llm_results/ as table1_<model>_<mode>.json. The
 pre-generated outputs behind the paper's Table 2 ship under
-paper_evidence/llm_task_eval/results/.
+artifacts/llm_task_eval/results/.
 
 Usage:
     python3 llm_eval.py --model Qwen/Qwen2.5-0.5B-Instruct --mode baseline

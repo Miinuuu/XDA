@@ -21,7 +21,7 @@ asic/
 ├── configs/<design>/   # per-design ORFS config.mk (relative paths)
 ├── src/                # SRAM-macro RTL variants + fakeram behavioral models
 ├── fakeram/            # fakeram45_256x16 / 64x15 .lib/.lef
-└── power/              # post-route power, vectorless cross-check (OpenSTA); paper result = measured VCD, see paper_evidence/asic_power/vcd_work/
+└── power/              # post-route power, vectorless cross-check (OpenSTA); paper result = measured VCD, see artifacts/asic_power/vcd_work/
 ```
 
 ## FPGA (Table 1A)
@@ -63,7 +63,7 @@ the 10 ns signoff clock for all designs.
 
 Vectorless post-route power estimate (uniform-activity, identical assumptions
 per design) — the **cross-check**; the paper's reported power is the measured
-gate-level-sim VCD under `paper_evidence/asic_power/vcd_work/`
+gate-level-sim VCD under `artifacts/asic_power/vcd_work/`
 (`run_vcd_power.sh`):
 
 ```bash
