@@ -105,9 +105,9 @@ Mean absolute deviation from FP16 over 40 task–model pairs: **0.30 pp** (NLI: 
 ## 🎬 Demo — XDA inside an LLM accelerator
 
 XDA plugs into an existing vector processing unit (VPU) as **one lookup stage** in front of its ALU and multiplier.
-Below, XDA is added to the 16-lane VPU of **TiAccel** (under review), an LLM accelerator on an AMD Alveo U200.
+Below, XDA is added to the 16-lane VPU of an LLM accelerator on an AMD Alveo U200.
 
-<p align="center"><img src="assets/xda_tiaccel.png" width="95%" alt="TiAccel on Alveo U200 with XDA added to the vector pass engine"></p>
+<p align="center"><img src="assets/xda_vpu_integration.png" width="95%" alt="LLM accelerator on Alveo U200 with XDA added to the vector pass engine"></p>
 
 - Integration adds only the **XDA lookup** and **two coefficient FIFOs**; the VPU's ALU, multiplier, and control are reused unchanged.
 - f(x) ≈ y0 + t·(y1 − y0): ① XDA lookup → ② stage 0: ALU (y1 − y0) → MUL (× t) → ③ stage 1: ALU (+ y0).
@@ -120,7 +120,7 @@ Below, XDA is added to the 16-lane VPU of **TiAccel** (under review), an LLM acc
   </tr>
   <tr>
     <td align="center"><sub>Live chat demo: CPU target model with the FPGA (Alveo U200) as the draft model in speculative decoding.</sub></td>
-    <td align="center"><sub>The Alveo U200 running TiAccel.</sub></td>
+    <td align="center"><sub>The Alveo U200 board used for the demo.</sub></td>
   </tr>
 </table>
 
