@@ -173,7 +173,7 @@ pip install -r requirements-llm.txt        # + LLM evaluation (paper Table 2)
 | **2** | LLM quality (5 models) | `sw/llm_eval.py` | `sw/llm_results/` |
 | **3** | Approximation accuracy (Parts A/B) | `sw/run_all_experiments.py` | `sw/eda_results/all_experiments.json` |
 
-Pre-generated outputs backing the camera-ready results are in [`paper_evidence/`](paper_evidence/).
+Pre-generated outputs backing the camera-ready results are in [`artifacts/`](artifacts/).
 
 ### Table 3 — Approximation accuracy
 
@@ -214,8 +214,8 @@ Each run replaces **SiLU**, **Softmax** (exp + reciprocal), and **RMSNorm** (rsq
 > [!NOTE]
 > `nli_eda` is XDA's internal name. The meta-llama checkpoints are gated on Hugging Face — set `HF_TOKEN`.
 
-- Canonical outputs behind the printed Table 2: `paper_evidence/llm_task_eval/results/`
-- `paper_evidence/llm_task_eval/derive_task_mad.py` re-derives the paper's 0.30 / 0.36 pp task-level deviations from those outputs alone.
+- Canonical outputs behind the printed Table 2: `artifacts/llm_task_eval/results/`
+- `artifacts/llm_task_eval/derive_task_mad.py` re-derives the paper's 0.30 / 0.36 pp task-level deviations from those outputs alone.
 - `sw/subnormal_hitrate.py` reproduces the Sec. 4.4 rsqrt-input subnormal profiling (four models, 100 Wikitext-2 samples); a rerun log ships in the same directory.
 
 ### Table 1 — Post-PnR hardware
@@ -359,7 +359,7 @@ DDR <──[512b AXI write]─────────────────�
 
 ```
 ├── run_pipeline.sh              # Full pipeline automation script
-├── paper_evidence/              # Pre-generated outputs backing camera-ready paper results
+├── artifacts/                   # Pre-generated outputs backing camera-ready paper results
 ├── sw/                          # Python software
 │   ├── nli_eda.py               # XDA core: knapsack DP optimization & evaluation
 │   ├── nli_eda_engine.py        # PyTorch forward-pass simulator (3/4-stage)
