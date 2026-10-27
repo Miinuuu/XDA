@@ -64,8 +64,6 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 
 ### Hardware — half the logic, 2× the ASIC clock
 
-<p align="center"><img src="assets/xda_hw.png" width="90%" alt="ASIC logic area and maximum clock frequency of NN-LUT16, NLI, and XDA"></p>
-
 | Metric (vs. NLI) | NLI | XDA | Change |
 |:--|:-:|:-:|:-:|
 | FPGA CLB LUTs (XCU200, DSP-free) | 2,092 | 1,012 | **−52%** |
@@ -76,11 +74,15 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 | ASIC total area (logic + SRAM) | 19,337 µm² | 12,674 µm² | **−34%** |
 | ASIC area–delay product (total area) | — | — | **3.0×** better |
 
-<sub>NN-LUT<sub>16</sub> is a logic-complexity reference only; it does not keep LLM accuracy (MMLU &lt; 27). Energy = SAIF dynamic power / F<sub>max</sub>.</sub>
+<sub>Energy = SAIF dynamic power / F<sub>max</sub>. Full comparison including NN-LUT in paper Table 1.</sub>
 
 ### Approximation accuracy — 9.7–103× lower mean error on 7 of 9 functions
 
-<p align="center"><img src="assets/xda_error.png" width="60%" alt="NLI-to-XDA mean error ratio per function"></p>
+NLI-to-XDA mean error ratio (higher = XDA better):
+
+| Tanh | Reciprocal | rsqrt | SiLU | Mish | GELU | HardSwish | Exp | Sigmoid |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| **103.0×** | **66.4×** | **20.7×** | **14.1×** | **13.9×** | **10.1×** | **9.7×** | 1.0× | 0.9× |
 
 - All finite FP16 inputs per function domain, W = 254. A ratio above 1× means XDA is better.
 - **2.1–4.4× lower** error on real SiLU / Softmax / RMSNorm activations recorded from Qwen2.5-0.5B and Llama-3.2-1B.
