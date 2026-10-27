@@ -18,7 +18,7 @@ Department of Electronic Engineering, Hanyang University
 **XDA reads the LUT address directly from the FP16 bits** —<br>
 half the logic, 2× the ASIC clock, LLM accuracy within 0.30 pp of FP16.
 
-[Key Idea](#-key-idea) · [Results](#-results) · [Quick Start](#-quick-start) · [Reproducing the Paper](#-reproducing-paper-tables-1-2-and-3) · [Hardware](#%EF%B8%8F-hardware-architecture) · [Citation](#-citation)
+[Key Idea](#-key-idea) · [Results](#-results) · [Demo](#-demo--xda-inside-an-llm-accelerator) · [Quick Start](#-quick-start) · [Reproducing the Paper](#-reproducing-paper-tables-1-2-and-3) · [Hardware](#%EF%B8%8F-hardware-architecture) · [Citation](#-citation)
 
 </div>
 
@@ -99,6 +99,28 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 | Qwen3-30B-A3B | 70.28 | 70.18 | **70.43** | +0.15 |
 
 Mean absolute deviation from FP16 over 40 task–model pairs: **0.30 pp** (NLI: 0.36 pp). NN-LUT with 16 segments drops to 31–34% on the same average.
+
+---
+
+## 🎬 Demo — XDA inside an LLM accelerator
+
+XDA plugs into an existing vector processing unit (VPU) as **one lookup stage** in front of its ALU and multiplier.
+Below, XDA is added to the 16-lane VPU of **TiAccel** (under review), an LLM accelerator on an AMD Alveo U200.
+
+<p align="center"><img src="assets/xda_tiaccel.png" width="95%" alt="TiAccel on Alveo U200 with XDA added to the vector pass engine"></p>
+
+- Integration adds only the **XDA lookup** and **two coefficient FIFOs**; the VPU's ALU, multiplier, and control are reused unchanged.
+- f(x) ≈ y0 + t·(y1 − y0): ① XDA lookup → ② stage 0: ALU (y1 − y0) → MUL (× t) → ③ stage 1: ALU (+ y0).
+- With 16-lane replication, XDA saves **34.5%** of the nonlinear-unit area versus NLI (paper §4.6).
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="assets/xda_demo.gif" width="560" alt="Interactive LLM chat demo on Alveo U200"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Live chat demo: CPU target model with the FPGA (Alveo U200) as the draft model in speculative decoding.</sub></td>
+  </tr>
+</table>
 
 ---
 
