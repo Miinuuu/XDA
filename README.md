@@ -115,10 +115,12 @@ Below, XDA is added to the 16-lane VPU of **TiAccel** (under review), an LLM acc
 
 <table align="center">
   <tr>
-    <td align="center"><img src="assets/xda_demo.gif" width="560" alt="Interactive LLM chat demo on Alveo U200"></td>
+    <td align="center" width="60%"><img src="assets/xda_demo.gif" alt="Interactive LLM chat demo on Alveo U200"></td>
+    <td align="center" width="40%"><img src="assets/xda_u200_board.jpg" alt="AMD Alveo U200 board used for the demo"></td>
   </tr>
   <tr>
     <td align="center"><sub>Live chat demo: CPU target model with the FPGA (Alveo U200) as the draft model in speculative decoding.</sub></td>
+    <td align="center"><sub>The Alveo U200 running TiAccel.</sub></td>
   </tr>
 </table>
 
