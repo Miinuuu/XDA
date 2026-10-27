@@ -8,6 +8,7 @@
 Department of Electronic Engineering, Hanyang University
 
 [![ICCAD 2026](https://img.shields.io/badge/ICCAD-2026-1f6f8b.svg)](#-citation)
+[![DOI](https://img.shields.io/badge/DOI-10.1145%2F3831252.3834200-blue.svg)](https://doi.org/10.1145/3831252.3834200)
 [![Python](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Verilog](https://img.shields.io/badge/RTL-Verilog-8A2BE2)](hw/)
@@ -68,11 +69,12 @@ FP16 input:  [sign(1) | exponent(5) | mantissa(10)]
 | Metric (vs. NLI) | NLI | XDA | Change |
 |:--|:-:|:-:|:-:|
 | FPGA CLB LUTs (XCU200, DSP-free) | 2,092 | 1,012 | **−52%** |
-| FPGA F<sub>max</sub> | 101 MHz | 147 MHz | **1.45×** |
+| FPGA F<sub>max</sub> | 101.2 MHz | 147.3 MHz | **1.45×** |
 | Energy per op | 0.37 nJ | 0.21 nJ | **−43%** |
 | ASIC logic area (Nangate45, post-route) | 13,027 µm² | 5,705 µm² | **−56%** |
-| ASIC F<sub>max</sub> | 103 MHz | 203 MHz | **~2×** |
-| ASIC area–delay product | — | — | **3.0×** better |
+| ASIC F<sub>max</sub> | 103.3 MHz | 203.0 MHz | **2.0×** |
+| ASIC total area (logic + SRAM) | 19,337 µm² | 12,674 µm² | **−34%** |
+| ASIC area–delay product (total area) | — | — | **3.0×** better |
 
 <sub>NN-LUT<sub>16</sub> is a logic-complexity reference only; it does not keep LLM accuracy (MMLU &lt; 27). Energy = SAIF dynamic power / F<sub>max</sub>.</sub>
 
@@ -382,8 +384,9 @@ The AMD/Xilinx example-derived files retain their original copyright and SPDX li
   title     = {XDA: Representation-Aware Exponent-Direct Addressing for Efficient Shared Nonlinear Units},
   author    = {Jeong, Min Wu and Rhee, Chae Eun},
   booktitle = {Proceedings of the IEEE/ACM International Conference on Computer-Aided Design (ICCAD)},
-  year      = {2026}
+  year      = {2026},
+  publisher = {ACM},
+  address   = {San Jose, CA, USA},
+  doi       = {10.1145/3831252.3834200}
 }
 ```
-
-For questions, contact Min Wu Jeong (jeongminwu@hanyang.ac.kr).
