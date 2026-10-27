@@ -115,7 +115,7 @@ Below, XDA is added to the 16-lane VPU of **TiAccel** (under review), an LLM acc
 
 <table align="center">
   <tr>
-    <td align="center" width="60%"><img src="assets/xda_demo.gif" alt="Interactive LLM chat demo on Alveo U200"></td>
+    <td align="center" width="60%"><img src="assets/xda_u200_chat_demo.gif" alt="Interactive LLM chat demo on Alveo U200"></td>
     <td align="center" width="40%"><img src="assets/xda_u200_board.jpg" alt="AMD Alveo U200 board used for the demo"></td>
   </tr>
   <tr>
