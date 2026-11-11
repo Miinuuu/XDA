@@ -21,7 +21,8 @@ asic/
 ├── run_asic_all.sh     # OpenROAD-flow-scripts driver (set ORFS_DIR)
 ├── constraint.sdc      # shared 10 ns signoff SDC
 ├── configs/<design>/   # per-design ORFS config.mk (relative paths)
-├── src/                # SRAM-macro RTL variants + fakeram behavioral models
+├── netlist/            # generic gate-level netlists (one per config; RTL is encrypted)
+├── src/                # fakeram black-box stubs
 ├── fakeram/            # fakeram45_256x16 / 64x15 .lib/.lef
 └── power/              # post-route power, vectorless cross-check (OpenSTA); paper result = measured VCD, see artifacts/asic_power/vcd_work/
 ```

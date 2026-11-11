@@ -2,11 +2,9 @@ export DESIGN_NAME = nli_engine_fp32
 export PLATFORM    = nangate45
 
 DESIGN_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-SRC_DIR := $(DESIGN_DIR)../../../fpga/src
 
-export VERILOG_FILES = $(SRC_DIR)/nli_engine_fp32.v \
-                       $(SRC_DIR)/fp_mult_norm.v \
-                       $(SRC_DIR)/fp_adder.v
+# Pre-synthesized generic netlist (RTL is encrypted; see hw/RTL_ENCRYPTION.md)
+export VERILOG_FILES = $(DESIGN_DIR)../../netlist/nli_engine_fp32.v
 export SDC_FILE      = $(DESIGN_DIR)../../constraint.sdc
 export ABC_AREA      = 1
 
