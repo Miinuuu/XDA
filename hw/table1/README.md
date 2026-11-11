@@ -2,8 +2,10 @@
 
 This directory contains the complete, self-contained flows that produce every
 number in Table 1: XDA, NLI, and NN-LUT on (A) DSP-free FPGA and (B)
-SRAM-backed ASIC. All RTL is plain Verilog, including the XDA engine
-(`fpga/src/eda_nli_engine_4s.v`, `asic/src/eda_nli_engine_4s_sram.v`).
+SRAM-backed ASIC. The synthesizable RTL (XDA engine, NLI / NN-LUT baselines,
+FP helpers) is distributed as IEEE-1735 encrypted Verilog; see
+[`hw/RTL_ENCRYPTION.md`](../RTL_ENCRYPTION.md). Testbenches and fakeram models
+remain plain text.
 
 ```
 fpga/

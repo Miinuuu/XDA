@@ -378,7 +378,7 @@ DDR <──[512b AXI write]─────────────────�
 │   ├── gen_eda_mem_fma.py       # FMA-variant .mem generator (4-stage)
 │   └── gen_exhaustive_mem.py    # Exhaustive FP16 test vector generation
 │
-└── hw/                          # Hardware RTL
+└── hw/                          # Hardware RTL (IEEE-1735 encrypted, see hw/RTL_ENCRYPTION.md)
     ├── fpu/
     │   └── fp_adder.v           # Parameterized FP16/FP32 adder
     ├── table1/                  # Reproduces paper Table 1 (see hw/table1/README.md)
